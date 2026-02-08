@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conto Termico 3.0 Advisor | Earth Science</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
         .logo-text-earth { color: #000000; font-family: sans-serif; font-weight: 800; }
         .logo-text-science { color: #0088cc; font-family: sans-serif; font-weight: 400; }
@@ -23,9 +22,11 @@
 
     <header class="bg-white border-b border-gray-200 p-4 mb-6 shadow-sm">
         <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="flex items-center scale-125 md:scale-150 py-2">
-                <span class="logo-text-earth text-2xl tracking-tighter">earth</span>
-                <span class="logo-text-science text-2xl tracking-tight ml-1">science</span>
+            <div class="flex items-center">
+                <div class="flex items-baseline scale-125 md:scale-150 py-2">
+                    <span class="logo-text-earth text-2xl tracking-tighter">earth</span>
+                    <span class="logo-text-science text-2xl tracking-tight ml-1">science</span>
+                </div>
             </div>
             <div class="text-center md:text-right">
                 <h1 class="text-xl font-black text-gray-800 uppercase tracking-widest">CONTO TERMICO 3.0</h1>
@@ -35,91 +36,42 @@
     </header>
 
     <main class="max-w-5xl mx-auto px-4 pb-12">
-        <div id="setup-panel" class="mb-6 bg-blue-50 p-6 rounded-xl shadow-sm border border-blue-200 hidden">
-            <h3 class="text-sm font-bold text-blue-800 mb-2 uppercase italic">Configurazione Database (Solo la prima volta)</h3>
-            <p class="text-xs text-gray-600 mb-4">Carica i file CSV per memorizzarli nel browser. Non dovrai più farlo in futuro.</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white p-3 rounded-lg border border-blue-100">
-                    <label class="text-[10px] font-black uppercase text-gray-400">1. CSV Comuni</label>
-                    <input type="file" id="csvComuni" accept=".csv" class="block w-full text-xs mt-1">
-                </div>
-                <div class="bg-white p-3 rounded-lg border border-blue-100">
-                    <label class="text-[10px] font-black uppercase text-gray-400">2. CSV Pompe di Calore</label>
-                    <input type="file" id="csvPdc" accept=".csv" class="block w-full text-xs mt-1">
-                </div>
+        <div id="app-container" class="bg-white rounded-2xl shadow-xl border border-gray-200 min-h-[450px] p-6 md:p-10 relative">
             </div>
-            <button onclick="salvaInMemoria()" class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-xs uppercase">Salva Database</button>
-        </div>
-
-        <div id="db-status" class="mb-4 text-[10px] text-right font-bold text-gray-400 uppercase tracking-widest"></div>
-
-        <div id="app-container" class="bg-white rounded-2xl shadow-xl border border-gray-200 min-h-[450px] p-6 md:p-10 relative"></div>
 
         <div id="navigation-controls" class="mt-6 text-center hidden">
-            <button onclick="renderHome()" class="px-6 py-2 bg-gray-800 text-white rounded-full hover:bg-blue-600 font-bold text-xs transition-all uppercase tracking-widest shadow-md">← Torna all'inizio</button>
-            <button onclick="resetDatabase()" class="ml-4 text-[9px] text-red-400 underline uppercase font-bold">Resetta Dati</button>
+            <button onclick="renderHome()" class="px-6 py-2 bg-gray-800 text-white rounded-full hover:bg-blue-600 font-bold text-xs transition-all uppercase tracking-widest shadow-md">
+                ← Torna all'inizio
+            </button>
         </div>
     </main>
 
     <script>
-        let DB_COMUNI = [];
-        let DB_PDC = [];
+        // ================================================================
+        // 1. ELENCO DATI (INLINE)
+        // ================================================================
+
+        // --- INCOLLA QUI L'ELENCO DEI COMUNI ---
+        // Formato suggerito: {c: "Nome", p: "Prov", z: "Zona"}
+        const DB_COMUNI = [
+            {"c":"Agliè","p":"TO","z":"E"},
+            {"c":"Airasca","p":"TO","z":"E"},
+            // ... incolla qui tutte le altre righe
+        ];
+
+        // --- INCOLLA QUI L'ELENCO DELLE POMPE DI CALORE ---
+        // Formato suggerito: {t: "Tipo", m: "Modello", kw: 6, s: 4.5}
+        const DB_PDC = [
+            {"t":"Aria/Acqua","m":"ALTHERMA 3 R","kw":6,"s":4.54},
+            // ... incolla qui tutte le altre righe
+        ];
+
         const ORE_ZONA = { 'A': 600, 'B': 850, 'C': 1100, 'D': 1400, 'E': 1700, 'F': 1800 };
 
-        // Carica dati dalla memoria del browser all'avvio
-        window.onload = () => {
-            const savedComuni = localStorage.getItem('db_comuni');
-            const savedPdc = localStorage.getItem('db_pdc');
+        // ================================================================
+        // 2. LOGICA APPLICAZIONE
+        // ================================================================
 
-            if (savedComuni && savedPdc) {
-                DB_COMUNI = JSON.parse(savedComuni);
-                DB_PDC = JSON.parse(savedPdc);
-                document.getElementById('db-status').innerText = `Database Attivo: ${DB_COMUNI.length} Comuni, ${DB_PDC.length} PdC`;
-                renderHome();
-            } else {
-                document.getElementById('setup-panel').classList.remove('hidden');
-                document.getElementById('db-status').innerText = "Database mancante: caricare i file CSV";
-                renderHome();
-            }
-        };
-
-        function salvaInMemoria() {
-            const fileComuni = document.getElementById('csvComuni').files[0];
-            const filePdc = document.getElementById('csvPdc').files[0];
-
-            if (!fileComuni || !filePdc) { alert("Seleziona entrambi i file!"); return; }
-
-            Papa.parse(fileComuni, {
-                header: true, delimiter: ";", skipEmptyLines: true, encoding: "ISO-8859-1",
-                complete: function(results) {
-                    DB_COMUNI = results.data.map(r => ({
-                        comune: (r['Comune'] || "").trim(),
-                        provincia: (r['Provincia'] || "").trim(),
-                        zona_climatica: (r['zona climatica'] || "").trim()
-                    })).filter(x => x.comune);
-                    localStorage.setItem('db_comuni', JSON.stringify(DB_COMUNI));
-                    
-                    Papa.parse(filePdc, {
-                        header: true, delimiter: ";", skipEmptyLines: true,
-                        complete: function(res) {
-                            DB_PDC = res.data.map(r => ({
-                                tipologia: (r['Tipologia scambio'] || "").trim(),
-                                modello: (r['Modello'] || "").trim(),
-                                id_esterna: (r['Identificativo modello unit… esterna'] || "").trim(),
-                                potenza_kw: parseFloat((r['Potenza termica [kW'] || "0").replace(',', '.')),
-                                scop: parseFloat((r['SCOP'] || "0").replace(',', '.'))
-                            })).filter(x => x.modello);
-                            localStorage.setItem('db_pdc', JSON.stringify(DB_PDC));
-                            location.reload(); // Ricarica per attivare tutto
-                        }
-                    });
-                }
-            });
-        }
-
-        function resetDatabase() { if(confirm("Cancellare i dati memorizzati?")) { localStorage.clear(); location.reload(); } }
-
-        // --- INTERFACCIA APP ---
         const app = document.getElementById('app-container');
         const nav = document.getElementById('navigation-controls');
 
@@ -131,7 +83,7 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <button onclick="selectSoggetto('privato')" class="p-8 border-2 border-gray-50 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center group">
-                        <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🏠</div>
+                        <div class="text-4xl mb-3">🏠</div>
                         <span class="block font-bold text-gray-800 uppercase group-hover:text-blue-600">Privato / Condominio</span>
                     </button>
                     <button onclick="selectSoggetto('impresa')" class="p-8 border-2 border-gray-50 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center group">
@@ -147,81 +99,95 @@
 
         function selectSoggetto(tipo) {
             nav.classList.remove('hidden');
-            if (tipo === 'pa') renderInterventi('pa', 'PA Standard');
-            else if (tipo === 'impresa') renderInterventi('impresa', 'Impresa');
-            else renderInterventi('privato');
+            renderInterventi(tipo);
         }
 
-        function renderInterventi(tipo, sotto = '') {
+        function renderInterventi(tipo) {
             app.innerHTML = `
                 <div class="flex justify-between items-center mb-8 pb-4 border-b border-gray-100">
                     <h2 class="text-xl font-black text-gray-800 uppercase italic">Interventi</h2>
-                    <span class="text-[10px] font-bold bg-blue-600 text-white px-3 py-1 rounded-md uppercase">${sotto || tipo}</span>
+                    <span class="text-[10px] font-bold bg-blue-600 text-white px-3 py-1 rounded-md uppercase">${tipo}</span>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <button onclick="renderIIIA('${sotto}')" class="p-4 border border-blue-200 bg-blue-50 rounded-xl text-left text-sm font-bold text-blue-800 hover:bg-blue-100 transition-all">
+                    <button onclick="renderIIIA('${tipo}')" class="p-4 border border-blue-200 bg-blue-50 rounded-xl text-left text-sm font-bold text-blue-800 hover:bg-blue-100 transition-all">
                         III.A - Pompe di Calore
                     </button>
                 </div>`;
         }
 
         function renderIIIA(sotto) {
-            if (DB_COMUNI.length === 0) { alert("Carica prima i database nel pannello in alto!"); return; }
             app.innerHTML = `
                 <div class="space-y-6">
                     <h2 class="text-2xl font-black text-blue-800 uppercase italic border-b pb-4">Calcolo III.A - Pompe di Calore</h2>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <div class="space-y-4 bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                            <div class="bg-white p-3 rounded-xl border border-blue-100 relative">
-                                <label class="block text-[10px] font-black text-blue-500 mb-1 uppercase">📍 Comune</label>
-                                <input type="text" id="inpComune" class="w-full p-2 border-b text-sm font-bold focus:outline-none" placeholder="Cerca comune..." onkeyup="filtraComuni(this.value)">
+                            <div class="relative">
+                                <label class="block text-[10px] font-black text-blue-500 mb-1 uppercase">📍 Località (Comune)</label>
+                                <input type="text" id="inpComune" class="w-full p-2 border rounded-xl text-sm font-bold" placeholder="Cerca comune..." onkeyup="filtraComuni(this.value)">
                                 <div id="suggComuni" class="suggestions-box"></div>
+                                <div id="infoZona" class="text-[10px] mt-1 italic text-gray-500"></div>
                             </div>
-                            <div class="bg-white p-3 rounded-xl border border-blue-100 relative">
-                                <label class="block text-[10px] font-black text-blue-500 mb-1 uppercase">🔎 Cerca Pompa di Calore</label>
-                                <input type="text" id="inpPdc" class="w-full p-2 border-b text-sm font-bold focus:outline-none" placeholder="Tipologia o modello..." onkeyup="filtraPdc(this.value)">
+
+                            <div class="relative">
+                                <label class="block text-[10px] font-black text-blue-500 mb-1 uppercase">🔎 Ricerca Pompa di Calore</label>
+                                <input type="text" id="inpPdc" class="w-full p-2 border rounded-xl text-sm font-bold" placeholder="Marca o modello..." onkeyup="filtraPdc(this.value)">
                                 <div id="suggPdc" class="suggestions-box"></div>
                             </div>
+
                             <div class="grid grid-cols-2 gap-4">
                                 <div><label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">Potenza (kW)</label>
-                                <input type="number" id="pmIII" class="w-full p-3 border rounded-xl bg-gray-50 font-bold" readonly></div>
+                                <input type="number" id="pmIII" class="w-full p-3 border rounded-xl bg-white font-bold" step="0.1"></div>
                                 <div><label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">SCOP</label>
-                                <input type="number" id="scopIII" class="w-full p-3 border rounded-xl bg-gray-50 font-bold" readonly></div>
+                                <input type="number" id="scopIII" class="w-full p-3 border rounded-xl bg-white font-bold" step="0.01"></div>
                             </div>
+                            
                             <div><label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">Spesa Stimata (€)</label>
                             <input type="number" id="spesaIII" class="w-full p-3 border rounded-xl" placeholder="Es: 10000"></div>
+                            
                             <input type="hidden" id="zonaVal" value="0">
                             <button onclick="calcolaFinale('${sotto}')" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg uppercase text-sm">Calcola Incentivo</button>
                         </div>
+                        
                         <div id="res-box" class="hidden p-8 bg-gray-900 text-white rounded-2xl flex flex-col justify-center shadow-xl border-t-4 border-blue-500">
                             <p class="text-[10px] font-black uppercase text-gray-400 mb-2">Incentivo Netto Erogabile</p>
                             <p id="valErogabile" class="text-5xl font-black text-white mb-6">€ 0,00</p>
-                            <div id="info-erogazione" class="text-xs bg-blue-900/40 p-4 rounded-lg italic border border-blue-800/50"></div>
+                            <div id="info-erogazione" class="text-xs bg-blue-900/40 p-4 rounded-lg italic"></div>
                         </div>
                     </div>
                 </div>`;
         }
 
-        // Funzioni di ricerca
+        // --- FUNZIONI DI RICERCA ---
+
         function filtraComuni(txt) {
             const box = document.getElementById('suggComuni');
             if(txt.length < 2) { box.style.display = 'none'; return; }
-            const match = DB_COMUNI.filter(c => c.comune.toLowerCase().startsWith(txt.toLowerCase())).slice(0, 10);
-            box.innerHTML = match.map(c => `<div class="suggestion-item" onclick="setComune('${c.comune.replace(/'/g, "\\'")}', '${c.zona_climatica}')">${c.comune} (${c.provincia})</div>`).join('');
+            // Filtra sulla chiave "c" (comune)
+            const match = DB_COMUNI.filter(item => item.c.toLowerCase().includes(txt.toLowerCase())).slice(0, 10);
+            box.innerHTML = match.map(item => `
+                <div class="suggestion-item" onclick="setComune('${item.c.replace(/'/g, "\\'")}', '${item.z}')">
+                    ${item.c} (${item.p})
+                </div>`).join('');
             box.style.display = 'block';
         }
 
         function setComune(nome, zona) {
             document.getElementById('inpComune').value = nome;
             document.getElementById('suggComuni').style.display = 'none';
-            document.getElementById('zonaVal').value = ORE_ZONA[zona] || 0;
+            const ore = ORE_ZONA[zona] || 0;
+            document.getElementById('zonaVal').value = ore;
+            document.getElementById('infoZona').innerHTML = `Zona <b>${zona}</b> (${ore} ore)`;
         }
 
         function filtraPdc(txt) {
             const box = document.getElementById('suggPdc');
             if(txt.length < 2) { box.style.display = 'none'; return; }
-            const match = DB_PDC.filter(p => (p.modello + p.tipologia).toLowerCase().includes(txt.toLowerCase())).slice(0, 10);
-            box.innerHTML = match.map(p => `<div class="suggestion-item" onclick="setPdc('${p.modello.replace(/'/g, "\\'")}', '${p.potenza_kw}', '${p.scop}', '${p.tipologia}')">[${p.tipologia}] ${p.modello}</div>`).join('');
+            // Filtra su "m" (modello) o "t" (tipologia)
+            const match = DB_PDC.filter(item => (item.m + item.t).toLowerCase().includes(txt.toLowerCase())).slice(0, 10);
+            box.innerHTML = match.map(item => `
+                <div class="suggestion-item" onclick="setPdc('${item.m.replace(/'/g, "\\'")}', ${item.kw}, ${item.s}, '${item.t}')">
+                    <span class="text-blue-600 font-bold">[${item.t}]</span> ${item.m}
+                </div>`).join('');
             box.style.display = 'block';
         }
 
@@ -237,23 +203,31 @@
             const pm = parseFloat(document.getElementById('pmIII').value) || 0;
             const quf = parseFloat(document.getElementById('zonaVal').value) || 0;
             const scop = parseFloat(document.getElementById('scopIII').value) || 0;
-            if(!quf || !pm) { alert("Seleziona comune e macchina!"); return; }
+            
+            if(!quf || !pm || !scop) { alert("Assicurati di aver selezionato Comune e Pompa di Calore!"); return; }
 
-            const ci = 0.11; // Coeff aria-acqua
+            const ci = 0.11; // Coefficiente base
             const anni = pm <= 35 ? 2 : 5;
             const calcolato = ci * pm * quf * (1 - (1/scop)) * anni;
+            
             const finale = Math.min(calcolato, spesa * 0.65);
 
             document.getElementById('res-box').classList.remove('hidden');
             document.getElementById('valErogabile').innerText = "€ " + finale.toLocaleString('it-IT', {minimumFractionDigits:2});
             
             const info = document.getElementById('info-erogazione');
-            if (finale <= 15000) info.innerHTML = "L'importo verrà erogato in un'unica rata (Limite 15.000€).";
-            else info.innerHTML = `L'importo verrà erogato in ${anni} rate annuali.`;
+            // LIMITE 15.000 EURO PER RATA UNICA
+            if (finale <= 15000) {
+                info.innerHTML = "Importo inferiore a 15.000€: erogazione in un'unica soluzione.";
+            } else {
+                info.innerHTML = `Erogazione in ${anni} rate annuali da € ${(finale/anni).toLocaleString('it-IT', {minimumFractionDigits:2})}.`;
+            }
         }
-    </script>
-<script>
-    // --- INCOLLA QUI I TUOI DATI ---
+
+        // Avvio iniziale
+        renderHome();
+ 
+        // --- INCOLLA QUI I TUOI DATI ---
     // Puoi generare questa lista partendo dal tuo Excel
     const DB_COMUNI =  [
   {
@@ -24688,3 +24662,4 @@
 </script>
 </body>
 </html>
+
