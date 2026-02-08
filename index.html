@@ -8,8 +8,17 @@
     <style>
         .logo-text-earth { color: #000000; font-family: sans-serif; font-weight: 800; }
         .logo-text-science { color: #0088cc; font-family: sans-serif; font-weight: 400; }
-        /* Stili aggiuntivi per i risultati di ricerca */
-        .search-helper { font-size: 0.75rem; color: #666; margin-top: 4px; font-style: italic; }
+        
+        /* Stile suggerimenti autocompletamento */
+        .suggestions-box {
+            position: absolute; background: white; border: 1px solid #ddd; 
+            border-radius: 0 0 8px 8px; width: 100%; max-height: 200px; 
+            overflow-y: auto; z-index: 50; shadow-lg; display: none;
+        }
+        .suggestion-item {
+            padding: 8px 12px; cursor: pointer; font-size: 0.9rem;
+        }
+        .suggestion-item:hover { background-color: #f0f9ff; color: #0088cc; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">
@@ -22,32 +31,35 @@
                     <span class="logo-text-science text-2xl tracking-tight ml-1">science</span>
                 </div>
             </div>
-            
             <div class="text-center md:text-right">
                 <h1 class="text-xl font-black text-gray-800 uppercase tracking-widest">CONTO TERMICO 3.0</h1>
-                <p class="text-[9px] text-gray-500 font-bold uppercase tracking-tight">
-                     SVILUPPATO DA Ing. E.Domestico (EGE) 
-                </p>
+                <p class="text-[9px] text-gray-500 font-bold uppercase tracking-tight">SVILUPPATO DA Ing. E.Domestico (EGE)</p>
             </div>
         </div>
     </header>
 
     <main class="max-w-5xl mx-auto px-4 pb-12">
         
-        <div id="data-loader-panel" class="hidden mb-6 bg-red-50 border border-red-200 p-4 rounded-xl text-center">
-            <p class="text-sm text-red-700 font-bold mb-2">⚠️ Impossibile caricare i database automaticamente (Blocco Browser/CORS).</p>
-            <p class="text-xs text-gray-600 mb-3">Per abilitare la ricerca Comuni e PdC, seleziona qui sotto i file JSON:</p>
-            <div class="flex justify-center gap-4">
-                <label class="cursor-pointer bg-white border border-gray-300 px-3 py-1 rounded text-xs hover:bg-gray-50">
-                    📂 Carica db_comuni_zone.json
-                    <input type="file" id="fileComuni" accept=".json" class="hidden" onchange="manualLoad(this, 'comuni')">
-                </label>
-                <label class="cursor-pointer bg-white border border-gray-300 px-3 py-1 rounded text-xs hover:bg-gray-50">
-                    📂 Carica db_pompe_calore.json
-                    <input type="file" id="filePdc" accept=".json" class="hidden" onchange="manualLoad(this, 'pdc')">
-                </label>
+        <div id="data-panel" class="mb-6 bg-white p-4 rounded-xl shadow-sm border border-orange-200 hidden">
+            <h3 class="text-sm font-bold text-orange-600 mb-2 uppercase flex items-center gap-2">
+                ⚠️ Caricamento Database
+            </h3>
+            <p class="text-xs text-gray-600 mb-3">
+                Il browser ha bloccato il caricamento automatico (sicurezza locale). 
+                <strong>Carica qui sotto i due file JSON per attivare la ricerca Comuni e Pompe di Calore.</strong>
+            </p>
+            <div class="flex flex-wrap gap-4">
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">1. File Comuni</label>
+                    <input type="file" accept=".json" onchange="manualLoad(this, 'comuni')" class="text-xs text-gray-500">
+                    <span id="status-comuni" class="text-[10px] text-red-400 mt-1">Non caricato</span>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">2. File Pompe di Calore</label>
+                    <input type="file" accept=".json" onchange="manualLoad(this, 'pdc')" class="text-xs text-gray-500">
+                    <span id="status-pdc" class="text-[10px] text-red-400 mt-1">Non caricato</span>
+                </div>
             </div>
-            <div id="manual-status" class="mt-2 text-xs font-bold text-green-600"></div>
         </div>
 
         <div id="app-container" class="bg-white rounded-2xl shadow-xl border border-gray-200 min-h-[450px] p-6 md:p-10">
@@ -60,110 +72,55 @@
         </div>
     </main>
 
-    <datalist id="listComuni"></datalist>
-    <datalist id="listPdc"></datalist>
-
     <script>
-        // --- GESTIONE DATI DATABASE ---
+        // --- GESTIONE DATI ---
         let DB_COMUNI = [];
         let DB_PDC = [];
-        
-        // Mappa Ore Funzionamento per Zona (DPR 412/93)
         const ORE_ZONA = { 'A': 600, 'B': 850, 'C': 1100, 'D': 1400, 'E': 1700, 'F': 1800 };
 
-        async function initData() {
+        // Tentativo caricamento automatico
+        window.addEventListener('load', async () => {
             try {
                 const [r1, r2] = await Promise.all([
                     fetch('db_comuni_zone.json'),
                     fetch('db_pompe_calore.json')
                 ]);
-                if(r1.ok && r2.ok) {
+                if (r1.ok && r2.ok) {
                     DB_COMUNI = await r1.json();
                     DB_PDC = await r2.json();
-                    popolaDatalists();
                     console.log("Database caricati automaticamente.");
                 } else {
                     throw new Error("File non trovati");
                 }
             } catch (e) {
-                console.warn("Caricamento automatico fallito. Richiesto manuale.");
-                document.getElementById('data-loader-panel').classList.remove('hidden');
+                console.warn("Autoload fallito, mostro pannello manuale.");
+                document.getElementById('data-panel').classList.remove('hidden');
             }
-        }
+            renderHome(); // Avvia comunque l'interfaccia
+        });
 
         function manualLoad(input, type) {
             const file = input.files[0];
-            if(!file) return;
+            if (!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
                 const data = JSON.parse(e.target.result);
-                if(type === 'comuni') DB_COMUNI = data;
-                if(type === 'pdc') DB_PDC = data;
-                
-                // Feedback utente
-                const status = document.getElementById('manual-status');
-                status.innerText = `Caricato: ${type === 'comuni' ? 'Comuni' : 'Pompe di Calore'} OK.`;
-                
-                if(DB_COMUNI.length > 0 && DB_PDC.length > 0) {
-                    document.getElementById('data-loader-panel').classList.add('hidden');
-                    popolaDatalists();
+                if (type === 'comuni') {
+                    DB_COMUNI = data;
+                    document.getElementById('status-comuni').innerText = "✅ OK (" + data.length + ")";
+                    document.getElementById('status-comuni').classList.replace('text-red-400', 'text-green-600');
                 } else {
-                    popolaDatalists(); // Aggiorna parzialmente
+                    DB_PDC = data;
+                    document.getElementById('status-pdc').innerText = "✅ OK (" + data.length + ")";
+                    document.getElementById('status-pdc').classList.replace('text-red-400', 'text-green-600');
                 }
             };
             reader.readAsText(file);
         }
 
-        function popolaDatalists() {
-            // Comuni
-            const dlComuni = document.getElementById('listComuni');
-            dlComuni.innerHTML = '';
-            // Frammento per performance
-            const fragC = document.createDocumentFragment();
-            DB_COMUNI.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = `${c.comune} (${c.provincia})`;
-                fragC.appendChild(opt);
-            });
-            dlComuni.appendChild(fragC);
-
-            // PDC
-            const dlPdc = document.getElementById('listPdc');
-            dlPdc.innerHTML = '';
-            const fragP = document.createDocumentFragment();
-            // Limitiamo il datalist PDC se troppo grande o usiamo logica onInput, 
-            // ma per ora carichiamo tutto se < 5000 item
-            DB_PDC.forEach(p => {
-                const opt = document.createElement('option');
-                // Value complesso per ricerca
-                opt.value = `${p.modello} - ${p.id_esterna}`; 
-                fragP.appendChild(opt);
-            });
-            dlPdc.appendChild(fragP);
-        }
-
-        // Avvio caricamento dati
-        initData();
-
-
-        // --- LOGICA APPLICAZIONE ORIGINALE ---
+        // --- INTERFACCIA UTENTE ---
         const app = document.getElementById('app-container');
         const nav = document.getElementById('navigation-controls');
-
-        const INTERVENTI_DB = {
-            titolo2: [
-                { id: 'II.A', label: 'II.A - Isolamento termico' }, { id: 'II.B', label: 'II.B - Infissi' },
-                { id: 'II.C', label: 'II.C - Schermature solari' }, { id: 'II.D', label: 'II.D - Edifici nZEB' },
-                { id: 'II.E', label: 'II.E - Illuminazione' }, { id: 'II.F', label: 'II.F - Building Automation' },
-                { id: 'II.G', label: 'II.G - Ricarica EV' }, { id: 'II.H', label: 'II.H - Fotovoltaico' }
-            ],
-            titolo3: [
-                { id: 'III.A', label: 'III.A - Pompe di calore' }, { id: 'III.B', label: 'III.B - Sistemi ibridi' },
-                { id: 'III.C', label: 'III.C - Caldaie biomassa' }, { id: 'III.D', label: 'III.D - Solare termico' },
-                { id: 'III.E', label: 'III.E - Scaldacqua PDC' }, { id: 'III.F', label: 'III.F - Teleriscaldamento' },
-                { id: 'III.G', label: 'III.G - Microcogenerazione' }
-            ]
-        };
 
         function renderHome() {
             nav.classList.add('hidden');
@@ -190,82 +147,24 @@
 
         function selectSoggetto(tipo) {
             nav.classList.remove('hidden');
-            if (tipo === 'pa') {
-                renderSottotipologia('pa', ["PA Standard < 15k ab.", "PA Standard > 15k ab.", "Scuole", "Sanità", "Istituti Penitenziari"]);
-            } else if (tipo === 'impresa') {
-                renderSottotipologia('impresa', ["Piccola Impresa", "Media Impresa", "Grande Impresa", "ETS Economico"]);
-            } else {
-                renderInterventi('privato');
-            }
+            if (tipo === 'pa') renderSottotipologia('pa', ["PA Standard < 15k ab.", "PA Standard > 15k ab.", "Scuole", "Sanità", "Istituti Penitenziari"]);
+            else if (tipo === 'impresa') renderSottotipologia('impresa', ["Piccola Impresa", "Media Impresa", "Grande Impresa", "ETS Economico"]);
+            else renderInterventi('privato');
         }
 
-        function renderSottotipologia(categoria, opzioni) {
+        function renderSottotipologia(cat, opts) {
             let html = `<h2 class="text-xl font-bold mb-6 text-gray-800 uppercase italic border-l-4 border-blue-500 pl-4">Specifica Tipologia</h2><div class="space-y-3">`;
-            opzioni.forEach(opt => {
-                html += `
-                    <button onclick="renderInterventi('${categoria}', '${opt}')" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-white hover:border-blue-500 hover:shadow-md transition-all flex justify-between items-center group">
-                        <span class="font-bold text-gray-600 group-hover:text-blue-600">${opt}</span>
-                        <span>→</span>
-                    </button>`;
+            opts.forEach(opt => {
+                html += `<button onclick="renderInterventi('${cat}', '${opt}')" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-white hover:border-blue-500 hover:shadow-md transition-all flex justify-between items-center group"><span class="font-bold text-gray-600 group-hover:text-blue-600">${opt}</span><span>→</span></button>`;
             });
             app.innerHTML = html + `</div>`;
         }
 
-        function renderInterventi(tipo, sottotipologia = '') {
-            let html = `
+        function renderInterventi(tipo, sotto = '') {
+            app.innerHTML = `
                 <div class="flex justify-between items-center mb-8 pb-4 border-b border-gray-100">
                     <h2 class="text-xl font-black text-gray-800 uppercase italic">Interventi</h2>
-                    <span class="text-[10px] font-bold bg-blue-600 text-white px-3 py-1 rounded-md uppercase tracking-tighter">${sottotipologia || tipo}</span>
-                </div>`;
-
-            if (tipo !== 'privato') {
-                html += `<div class="mb-8"><h3 class="text-[10px] font-black text-gray-400 mb-4 uppercase tracking-[0.2em]">Titolo II - Efficienza</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-3">`;
-                INTERVENTI_DB.titolo2.forEach(int => {
-                    html += `<button onclick="openCalculator('${int.id}', '${tipo}', '${sottotipologia}')" class="p-4 border border-gray-100 rounded-xl text-left text-sm font-bold text-gray-600 hover:border-blue-500 hover:bg-blue-50 transition-all">${int.label}</button>`;
-                });
-                html += `</div></div>`;
-            }
-
-            html += `<div><h3 class="text-[10px] font-black text-gray-400 mb-4 uppercase tracking-[0.2em]">Titolo III - Rinnovabili</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-3">`;
-            INTERVENTI_DB.titolo3.forEach(int => {
-                html += `<button onclick="openCalculator('${int.id}', '${tipo}', '${sottotipologia}')" class="p-4 border border-gray-100 rounded-xl text-left text-sm font-bold text-gray-600 hover:border-blue-500 hover:bg-blue-50 transition-all">${int.label}</button>`;
-            });
-            app.innerHTML = html + `</div></div>`;
-        }
-
-        function openCalculator(id, tipo, sottotipologia) {
-            if (id === 'III.A') renderIIIA(tipo, sottotipologia);
-            else {
-                app.innerHTML = `<div class="py-20 text-center"><div class="text-5xl mb-4">🛠️</div><h3 class="font-bold text-gray-800 uppercase">Modulo ${id}</h3><p class="text-gray-400 text-sm mt-2 italic">Parametri di calcolo in fase di aggiornamento.</p></div>`;
-            }
-        }
-
-        function renderIIIA(tipo, sottotipologia) {
-            // Sezione modificata con i campi di ricerca DB
-            app.innerHTML = `
-                <div class="space-y-6">
-                    <h2 class="text-2xl font-black text-blue-800 uppercase italic border-b pb-4">Calcolo III.A - Pompe di Calore</h2>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div class="space-y-4 bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                            
-                            <div class="bg-white p-3 rounded-xl border border-blue-100">
-                                <label class="block text-[10px] font-black text-blue-500 mb-1 uppercase">📍 Località Intervento</label>
-                                <input type="text" id="searchComune" list="listComuni" 
-                                       class="w-full p-2 border-b border-gray-200 focus:outline-none focus:border-blue-500 text-sm font-bold" 
-                                       placeholder="Cerca Comune..." onchange="aggiornaZonaClimatica(this.value)">
-                                <div id="infoZona" class="text-xs text-gray-400 mt-1 italic">Zona non selezionata</div>
-                            </div>
-
-                            <div class="bg-white p-3 rounded-xl border border-blue-100">
-                                <label class="block text-[10px] font-black text-blue-500 mb-1 uppercase">🔎 Cerca Modello Pdc</label>
-                                <input type="text" id="searchPdc" list="listPdc" 
-                                       class="w-full p-2 border-b border-gray-200 focus:outline-none focus:border-blue-500 text-sm font-bold" 
-                                       placeholder="Digita modello..." onchange="aggiornaDatiPdc(this.value)">
-                                <div class="text-[9px] text-gray-400 mt-1 italic">Compila auto. potenza e COP/SCOP</div>
-                            </div>
-
-                            <hr class="border-gray-200">
-
-                            <div>
-                                <label class="block text-
+                    <span class="text-[10px] font-bold bg-blue-600 text-white px-3 py-1 rounded-md uppercase tracking-tighter">${sotto || tipo}</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <button onclick="renderIIIA('${sotto}')" class
