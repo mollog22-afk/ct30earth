@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conto Termico 3.0 Advisor</title>
+    <title>Conto Termico 3.0 Advisor | Earth Science</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .logo-text-earth { color: #000000; font-family: sans-serif; font-weight: 800; }
         .logo-text-science { color: #0088cc; font-family: sans-serif; font-weight: 400; }
         
+        /* Stile menu a tendina */
         .suggestions-box {
             position: absolute; background: white; border: 1px solid #e5e7eb; 
             border-radius: 0 0 12px 12px; width: 100%; max-height: 250px; 
@@ -18,6 +19,10 @@
         .suggestion-item { padding: 10px 14px; cursor: pointer; font-size: 0.85rem; border-bottom: 1px solid #f3f4f6; color: #374151; }
         .suggestion-item:last-child { border-bottom: none; }
         .suggestion-item:hover { background-color: #eff6ff; color: #2563eb; }
+        
+        /* Animazioni */
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">
@@ -39,20 +44,102 @@
 
     <main class="max-w-5xl mx-auto px-4 pb-12">
         
-        <div id="debug-console" class="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 text-sm hidden">
-            <p class="font-bold text-yellow-800">Stato Sistema:</p>
-            <ul id="debug-log" class="list-disc ml-5 text-yellow-700 font-mono text-xs mt-2"></ul>
-        </div>
-
-        <div id="data-panel" class="mb-6 bg-red-50 p-6 rounded-xl shadow-sm border border-red-100 hidden">
-            <h3 class="text-sm font-bold text-red-700 mb-2 uppercase">⚠️ Errore Caricamento Automatico</h3>
-            <p class="text-xs text-gray-600 mb-4">Usa i pulsanti qui sotto per caricare i file JSON manualmente:</p>
+        <div id="data-panel" class="mb-6 bg-red-50 p-6 rounded-xl shadow-sm border border-red-200 hidden">
+            <h3 class="text-sm font-bold text-red-700 mb-2 uppercase flex items-center gap-2">
+                ⚠️ Database non rilevato
+            </h3>
+            <p class="text-xs text-gray-700 mb-4">
+                Il sistema non riesce a leggere i file automaticamente (probabile blocco di sicurezza del browser o file mancanti).<br>
+                <strong>Nessun problema! Seleziona i due file qui sotto per avviare subito il calcolatore:</strong>
+            </p>
             <div class="flex flex-wrap gap-4">
-                <div class="flex flex-col w-full md:w-auto">
-                    <label class="text-[10px] font-bold text-gray-500 uppercase mb-1">File Comuni</label>
+                <div class="flex flex-col w-full md:w-auto bg-white p-3 rounded-lg border border-red-100">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase mb-1">1. Carica "db_comuni_zone.json"</label>
                     <input type="file" accept=".json" onchange="manualLoad(this, 'comuni')" class="text-xs">
                     <span id="status-comuni" class="text-[10px] text-red-400 mt-1 font-bold">In attesa...</span>
                 </div>
-                <div class="flex flex-col w-full md:w-auto">
-                    <label class="text-[10px] font-bold text-gray-500 uppercase mb-1">File PdC</label>
+                <div class="flex flex-col w-full md:w-auto bg-white p-3 rounded-lg border border-red-100">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase mb-1">2. Carica "db_pompe_calore.json"</label>
                     <input type="file" accept=".json" onchange="manualLoad(this, 'pdc')" class="text-xs">
+                    <span id="status-pdc" class="text-[10px] text-red-400 mt-1 font-bold">In attesa...</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="app-container" class="bg-white rounded-2xl shadow-xl border border-gray-200 min-h-[450px] p-6 md:p-10 relative">
+            </div>
+
+        <div id="navigation-controls" class="mt-6 text-center hidden">
+            <button onclick="renderHome()" class="px-6 py-2 bg-gray-800 text-white rounded-full hover:bg-blue-600 font-bold text-xs transition-all uppercase tracking-widest shadow-md">← Torna all'inizio</button>
+        </div>
+    </main>
+
+    <script>
+        // --- GESTIONE DATI ---
+        let DB_COMUNI = [];
+        let DB_PDC = [];
+        const ORE_ZONA = { 'A': 600, 'B': 850, 'C': 1100, 'D': 1400, 'E': 1700, 'F': 1800 };
+
+        // Avvio: tenta caricamento automatico, se fallisce mostra pannello manuale
+        window.addEventListener('load', async () => {
+            const pathComuni = './db_comuni_zone.json';
+            const pathPdc = './db_pompe_calore.json';
+
+            try {
+                // Tenta fetch Comuni
+                const r1 = await fetch(pathComuni);
+                if (!r1.ok) throw new Error("Comuni non trovati");
+                DB_COMUNI = await r1.json();
+
+                // Tenta fetch Pdc
+                const r2 = await fetch(pathPdc);
+                if (!r2.ok) throw new Error("PdC non trovate");
+                DB_PDC = await r2.json();
+
+                console.log("Database caricati automaticamente.");
+            } catch (e) {
+                console.warn("Caricamento automatico fallito, attivo manuale:", e);
+                document.getElementById('data-panel').classList.remove('hidden');
+            }
+            renderHome();
+        });
+
+        // Funzione Caricamento Manuale (File Reader)
+        function manualLoad(input, type) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (type === 'comuni') {
+                        DB_COMUNI = data;
+                        const el = document.getElementById('status-comuni');
+                        el.innerText = "✅ CARICATO (" + data.length + ")";
+                        el.classList.replace('text-red-400', 'text-green-600');
+                    } else {
+                        DB_PDC = data;
+                        const el = document.getElementById('status-pdc');
+                        el.innerText = "✅ CARICATO (" + data.length + ")";
+                        el.classList.replace('text-red-400', 'text-green-600');
+                    }
+                    
+                    // Se entrambi caricati, nascondi pannello errore dopo un po'
+                    if (DB_COMUNI.length > 0 && DB_PDC.length > 0) {
+                        setTimeout(() => {
+                           // document.getElementById('data-panel').classList.add('hidden'); // Opzionale: nascondere
+                           alert("Database caricati con successo! Puoi procedere.");
+                        }, 500);
+                    }
+                } catch(err) { alert("File JSON non valido o corrotto."); }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- INTERFACCIA ---
+        const app = document.getElementById('app-container');
+        const nav = document.getElementById('navigation-controls');
+
+        const INTERVENTI_DB = {
+            titolo2: [ { id: 'II.A', label: 'II.A - Isolamento termico' }, { id: 'II.B', label: 'II.B - Infissi' }, { id: 'II.C', label: 'II.C - Schermature solari' }, { id: 'II.D', label: 'II.D - Edifici nZEB' }, { id: 'II.E', label: 'II.E - Illuminazione' }, { id: 'II.F', label: 'II.F - Building Automation' }, { id: 'II.G', label: 'II.G - Ricarica EV' }, { id: 'II.H', label: 'II.H - Fotovoltaico' } ],
+            titolo3: [ { id: 'III.A', label: 'III.A - Pompe di calore' }, { id: 'III.B', label: 'III.B - Sistemi ibridi' }, { id: 'III.C', label: 'III.C - Caldaie biomassa
