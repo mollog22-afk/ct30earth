@@ -3,62 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calcolatore Incentivi & Zone</title>
+    <title>Configuratore Conto Termico</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        :root {
-            --primary: #2563EB;
-            --secondary: #10B981;
-            --bg: #F3F4F6;
-            --card: #FFFFFF;
-            --text: #1F2937;
-        }
-
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        :root { --primary: #2563EB; --bg: #F3F4F6; --text: #1F2937; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
         .container { max-width: 900px; margin: 0 auto; }
         
-        /* Header */
-        header { text-align: center; margin-bottom: 40px; padding-top: 20px; }
-        header h1 { font-size: 2rem; font-weight: 800; color: var(--primary); margin: 0; }
-        header p { color: #666; }
+        /* HEADER */
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { color: var(--primary); margin-bottom: 5px; }
 
-        /* Steps Logic */
-        .step-container { display: none; animation: fadeIn 0.5s; }
-        .step-container.active { display: block; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Cards Scelta (Step 1) */
-        .choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .choice-card {
-            background: var(--card); padding: 30px; border-radius: 12px; text-align: center;
-            cursor: pointer; border: 2px solid transparent; transition: all 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        /* CARDS */
+        .step-card { 
+            background: white; padding: 30px; border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; 
+            display: none; /* Nascosto di default */
+            animation: fadeIn 0.4s ease-in;
         }
-        .choice-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px rgba(0,0,0,0.1); border-color: var(--primary); }
-        .choice-icon { font-size: 3rem; margin-bottom: 15px; display: block; }
-        .choice-title { font-weight: 700; font-size: 1.2rem; display: block; margin-bottom: 10px; }
-
-        /* Input Comune (Step 2) */
-        .geo-card { background: var(--card); padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        input[type="text"] {
-            width: 100%; max-width: 400px; padding: 15px; font-size: 1.1rem; border: 2px solid #ddd;
-            border-radius: 8px; margin-top: 10px; text-align: center;
-        }
-        input:focus { border-color: var(--primary); outline: none; }
+        .step-card.active { display: block; }
         
-        .geo-data-preview {
-            display: none; margin-top: 20px; padding: 15px; background: #EFF6FF; 
-            border-radius: 8px; border: 1px solid #BFDBFE; color: var(--primary);
-        }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
-        /* Risultati (Step 3) */
-        .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-        .pdc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        
-        .pdc-item {
-            background: white; border-radius: 10px; padding: 20px; position: relative;
-            border: 1px solid #eee; transition: transform 0.2s;
+        /* INTERVENTO (STEP 1) */
+        .grid-scelta { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .btn-scelta {
+            padding: 30px; border: 2px solid #eee; border-radius: 10px; cursor: pointer;
+            text-align: center; transition: 0.2s; background: #fff;
         }
-        .pdc-item
+        .btn-scelta:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 10px 15px rgba(0,0,0,0.05); }
+        .icon { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+        
+        /* COMUNI (STEP 2) */
+        input[type="text"] { width: 100%; padding: 15px; font-size: 1.1rem; border: 2px solid #ddd; border-radius: 8px; margin-top: 10px; box-sizing: border-box; }
+        .geo-result { background: #eff6ff; border: 1px solid #dbeafe; padding: 15px; border-radius: 8px; margin-top: 20px; display: none; }
+        
+        /* RISULTATI (STEP 3) */
+        .pdc-card { background: white; border: 1px solid #eee; border-radius: 8px; padding: 20px; margin-bottom: 15px; }
+        .incentivo-box { background: #ecfdf5; color: #065f46; padding: 10px; border-radius: 5px; font-weight: bold; margin-top: 10px; text-align: center; border: 1px solid #a7f3d0; }
+        
+        /* NAVIGATION */
+        .btn { background: var(--primary); color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; margin-top: 20px; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-back { background: #9ca3af; margin-right: 10px; }
+
+        /* ERROR / MANUAL UPLOAD SCREEN */
+        #manual-load-screen { display: none; background: white; padding: 40px; border-radius: 12px; text-align: center; border: 2px solid #fca5a5; }
+        .file-upload-group { margin: 20px 0; text-align: left; background: #f9fafb; padding: 15px; border-radius: 8px; }
+        
+        #loader { position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 99; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="loader">Caricamento Sistema...</div>
+
+    <div class="container">
+        <header>
+            <h1>Configuratore Energetico</h1>
+            <p>Incentivi Conto Termico & Selezione Zone</p>
+        </header>
+
+        <div id="manual-load-screen">
+            <h2 style="color:#dc2626;">Impossibile caricare i file automaticamente</h2>
+            <p>Il browser ha bloccato il caricamento automatico (probabilmente perché non stai usando un server locale).</p>
+            <p><strong>Carica qui i file manualmente per procedere:</strong></p>
+            
+            <div class="file-upload-group">
+                <label>1. Carica il file <strong>db_comuni_zone.json</strong>:</label><br>
+                <input type="file" id="fileComuni" accept=".json">
+            </div>
+            <div class="file-upload-group">
+                <label>2. Carica il file <strong>db_pompe_calore.json</strong>:</label><br>
+                <input type="file" id="filePDC" accept=".json">
+            </div>
+            
+            <button class="btn" onclick="caricaManualmente()">Avvia Configuratore</button>
+        </div>
+
+        <div id="step1" class="step-card">
+            <h2>1. Seleziona Tipo Intervento</h2>
+            <div class="grid-scelta">
+                <div class="btn-scelta" onclick="setIntervento('sostituzione')">
+                    <span class="icon">🔄</span>
+                    <strong>Sostituzione Impianto</strong>
+                    <div style="font-size:0.8rem; color:#666; margin-top:5px;">Incentivo Conto Termico Disponibile</div>
+                </div>
+                <div class="btn-scelta" onclick="setIntervento('nuovo')">
+                    <span class="icon">🏠</span>
+                    <strong>Nuova Installazione</strong>
+                    <div style="font-size:0.8rem; color:#666; margin-top:5px;">Nessun Incentivo Statale</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="step2" class="step-card">
+            <h2>2. Dove si trova l'immobile?</h2>
+            <label>Cerca il tuo comune:</label>
+            <input type="text" id="inputComune" list="dlComuni" placeholder="Digita il nome..." autocomplete="off">
+            <datalist id="dlComuni"></datalist>
+
+            <div id="geoPreview" class="geo-result">
+                <strong>Trovato:</strong> <span id="lblComune">-</span><br>
+                Zona Climatica: <strong id="lblZona" style="font-size:1.2rem; color:var(--primary);">-</strong> | 
+                Gradi Giorno: <span id="lblGradi">-</span>
+            </div>
+
+            <div>
+                <button class="btn btn-back" onclick="gotoStep(1)">Indietro</button>
+                <button class="btn" id="btnGoStep3" onclick="gotoStep(3)" disabled>Calcola Risultati</button>
+            </div>
+        </div>
+
+        <div id="step3" class="step-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2>3. Soluzioni & Incentivi</h2>
+                <select id="filtroKw" onchange="renderRisultati()" style="padding:10px;">
+                    <option value="0">Tutte le potenze</option>
+                    <option value="4">Min 4 kW</option>
+                    <option value="6">Min 6 kW</option>
+                    <option value="8">Min 8 kW</option>
+                    <option value="12">Min 12 kW</option>
+                </select>
+            </div>
+            
+            <p style="color:#666; font-size:0.9rem;">Risultati trovati: <strong id="countRes">0</strong></p>
+            <div id="containerPDC"></div> <button class="btn btn-back" onclick="gotoStep(2)">Indietro</button>
+        </div>
+
+    </div>
+
+    <script>
+        // GLOBALI
+        let dbComuni = [];
