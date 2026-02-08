@@ -3,170 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configuratore Pompa di Calore & Zone Climatiche</title>
+    <title>Calcolatore Incentivi & Zone</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* --- STILI GENERALI & LAYOUT (Design Moderno) --- */
         :root {
-            --primary: #2563EB;      /* Blu Intenso */
-            --primary-dark: #1E40AF;
-            --secondary: #10B981;    /* Verde Successo */
-            --bg-color: #F3F4F6;     /* Grigio Chiarissimo Sfondo */
-            --card-bg: #FFFFFF;
-            --text-main: #1F2937;
-            --text-muted: #6B7280;
-            --border-radius: 12px;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --primary: #2563EB;
+            --secondary: #10B981;
+            --bg: #F3F4F6;
+            --card: #FFFFFF;
+            --text: #1F2937;
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 40px 20px;
-            line-height: 1.5;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        /* Header */
-        header {
-            text-align: center;
-            margin-bottom: 50px;
-        }
-        header h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: var(--text-main);
-            margin-bottom: 10px;
-            letter-spacing: -0.02em;
-        }
-        header p {
-            font-size: 1.1rem;
-            color: var(--text-muted);
-        }
-
-        /* Cards dei Passaggi */
-        .step-card {
-            background: var(--card-bg);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 30px;
-            margin-bottom: 30px;
-            position: relative;
-            overflow: hidden;
-            border: 1px solid #E5E7EB;
-        }
-
-        .step-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 25px;
-            border-bottom: 2px solid #F3F4F6;
-            padding-bottom: 15px;
-        }
-
-        .step-number {
-            background-color: var(--primary);
-            color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-right: 15px;
-            flex-shrink: 0;
-        }
-
-        .step-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-main);
-            margin: 0;
-        }
-
-        /* Input Styles */
-        .input-group {
-            margin-bottom: 20px;
-        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
         
-        label {
-            display: block;
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--text-main);
+        /* Header */
+        header { text-align: center; margin-bottom: 40px; padding-top: 20px; }
+        header h1 { font-size: 2rem; font-weight: 800; color: var(--primary); margin: 0; }
+        header p { color: #666; }
+
+        /* Steps Logic */
+        .step-container { display: none; animation: fadeIn 0.5s; }
+        .step-container.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Cards Scelta (Step 1) */
+        .choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .choice-card {
+            background: var(--card); padding: 30px; border-radius: 12px; text-align: center;
+            cursor: pointer; border: 2px solid transparent; transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .choice-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px rgba(0,0,0,0.1); border-color: var(--primary); }
+        .choice-icon { font-size: 3rem; margin-bottom: 15px; display: block; }
+        .choice-title { font-weight: 700; font-size: 1.2rem; display: block; margin-bottom: 10px; }
+
+        /* Input Comune (Step 2) */
+        .geo-card { background: var(--card); padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        input[type="text"] {
+            width: 100%; max-width: 400px; padding: 15px; font-size: 1.1rem; border: 2px solid #ddd;
+            border-radius: 8px; margin-top: 10px; text-align: center;
+        }
+        input:focus { border-color: var(--primary); outline: none; }
+        
+        .geo-data-preview {
+            display: none; margin-top: 20px; padding: 15px; background: #EFF6FF; 
+            border-radius: 8px; border: 1px solid #BFDBFE; color: var(--primary);
         }
 
-        input[type="text"], select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #E5E7EB;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.2s;
-            box-sizing: border-box; /* Importante per padding */
+        /* Risultati (Step 3) */
+        .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .pdc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        
+        .pdc-item {
+            background: white; border-radius: 10px; padding: 20px; position: relative;
+            border: 1px solid #eee; transition: transform 0.2s;
         }
-
-        input[type="text"]:focus, select:focus {
-            border-color: var(--primary);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        /* Risultati Zona Climatica (Grid) */
-        .geo-results {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-            background-color: #F9FAFB;
-            padding: 20px;
-            border-radius: 8px;
-            display: none; /* Nascosto finché non si cerca */
-            border: 1px solid #E5E7EB;
-        }
-
-        .geo-item {
-            text-align: center;
-        }
-        .geo-value {
-            display: block;
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--primary);
-        }
-        .geo-label {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        /* Griglia Risultati Pompe di Calore */
-        .pdc-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 25px;
-        }
-
-        .pdc-card {
-            background: white;
-            border: 1px solid #E5E7EB;
-            border-radius: 10px;
-            padding: 20px;
-            transition: transform 0.2s, box-shadow 0.2s;
-            position: relative;
-        }
-
-        .pdc-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1
+        .pdc-item
