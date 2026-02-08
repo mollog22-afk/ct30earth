@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conto Termico 3.0 Advisor | Earth Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans pb-10">
+
+    <header class="bg-white border-b border-gray-200 p-6 mb-8 shadow-sm">
+        <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            <img src="https://storage.googleapis.com/multi-modal-images/image_d26002.png" alt="Earth Science Logo" class="h-16 object-contain">
+            <div class="text-center md:text-right">
+                <h1 class="text-2xl font-black text-blue-900 uppercase tracking-tighter">CONTO TERMICO 3.0</h1>
+                <p class="text-[10px] text-gray-500 mt-1 max-w-md">
+                    Calcolatore Incentivi e Aliquote - Ing. E.Domestico(EGE) - Ing. M. Santelli(EGE). 
+                    <span class="font-bold text-red-600 italic">Diagnosi Energetica obbligatoria per II.A, II.D e > 200 kWt.</span>
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4">
+        <div id="app-container" class="bg-white rounded-3xl shadow-xl p-6 md:p-10 border border-gray-100 min-h-[400px]">
+            </div>
+
+        <div id="navigation-controls" class="mt-8 text-center hidden">
+            <button onclick="renderHome()" class="inline-flex items-center px-6 py-2 bg-blue-900 text-white rounded-full hover:bg-blue-800 font-semibold text-sm transition-all shadow-md">
+                ← Torna alla selezione iniziale
+            </button>
+        </div>
+
+        <footer class="mt-12 text-gray-400 text-center border-t border-gray-200 pt-6">
+            <p class="text-xs font-bold uppercase tracking-widest">Earth Science - Supporto Decisionale Energetico</p>
+            <p class="text-[10px] mt-1 opacity-70">© 2026 - Powered by E.Domestico</p>
+        </footer>
+    </main>
+
+    <script>
+        const app = document.getElementById('app-container');
+        const nav = document.getElementById('navigation-controls');
+
+        const INTERVENTI_DB = {
+            titolo2: [
+                { id: 'II.A', label: 'II.A - Isolamento termico' }, { id: 'II.B', label: 'II.B - Infissi' },
+                { id: 'II.C', label: 'II.C - Schermature solari' }, { id: 'II.D', label: 'II.D - Edifici nZEB' },
+                { id: 'II.E', label: 'II.E - Illuminazione efficiente' }, { id: 'II.F', label: 'II.F - Building Automation' },
+                { id: 'II.G', label: 'II.G - Ricarica veicoli elettrici' }, { id: 'II.H', label: 'II.H - Fotovoltaico' }
+            ],
+            titolo3: [
+                { id: 'III.A', label: 'III.A - Pompe di calore' }, { id: 'III.B', label: 'III.B - Sistemi ibridi' },
+                { id: 'III.C', label: 'III.C - Caldaie a biomassa' }, { id: 'III.D', label: 'III.D - Solare termico' },
+                { id: 'III.E', label: 'III.E - Scaldacqua PDC' }, { id: 'III.F', label: 'III.F - Teleriscaldamento' },
+                { id: 'III.G', label: 'III.G - Microcogenerazione' }
+            ]
+        };
+
+        function renderHome() {
+            nav.classList.add('hidden');
+            app.innerHTML = `
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold text-gray-800">Benvenuto</h2>
+                    <p class="text-gray-500">Seleziona il Soggetto Responsabile per iniziare il calcolo</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <button onclick="selectSoggetto('privato')" class="group p-10 border-2 border-gray-50 rounded-3xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center shadow-sm">
+                        <div class="text-5xl mb-4 group-hover:scale-110 transition-transform">🏠</div>
+                        <span class="block font-black text-blue-900 text-xl uppercase">Privato</span>
+                    </button>
+                    <button onclick="selectSoggetto('impresa')" class="group p-10 border-2 border-gray-50 rounded-3xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center shadow-sm">
+                        <div class="text-5xl mb-4 group-hover:scale-110 transition-transform">🏢</div>
+                        <span class="block font-black text-blue-900 text-xl uppercase">Impresa</span>
+                    </button>
+                    <button onclick="selectSoggetto('pa')" class="group p-10 border-2 border-gray-50 rounded-3xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center shadow-sm">
+                        <div class="text-5xl mb-4 group-hover:scale-110 transition-transform">🏛️</div>
+                        <span class="block font-black text-blue-900 text-xl uppercase">PA</span>
+                    </button>
+                </div>`;
+        }
+
+        function selectSoggetto(tipo) {
+            nav.classList.remove('hidden');
+            if (tipo === 'pa') {
+                renderSottotipologia('pa', [
+                    "PA Standard sotto i 15.000 abitanti", "PA Standard sopra i 15.000 abitanti",
+                    "Istituti Penitenziari", "Scuole", "Strutture Sanitarie",
+                    "ETS non economico sotto i 15.000 abitanti", "ETS non economico sopra i 15.000 abitanti"
+                ]);
+            } else if (tipo === 'impresa') {
+                renderSottotipologia('impresa', ["ETS economico", "Piccola impresa", "Media impresa", "Grande impresa"]);
+            } else {
+                renderInterventi('privato');
+            }
+        }
+
+        function renderSottotipologia(categoria, opzioni) {
+            let html = `<h2 class="text-2xl font-bold mb-8 text-blue-900 border-l-4 border-blue-500 pl-4">Tipologia Ente/Società</h2><div class="grid grid-cols-1 gap-3">`;
+            opzioni.forEach(opt => {
+                html += `
+                    <button onclick="renderInterventi('${categoria}', '${opt}')" class="w-full p-5 bg-white border border-gray-200 rounded-2xl hover:border-blue-400 hover:bg-blue-50 flex justify-between items-center group transition-all shadow-sm">
+                        <span class="font-bold text-gray-700 group-hover:text-blue-800">${opt}</span>
+                        <span class="text-blue-400 group-hover:translate-x-2 transition-transform">➔</span>
+                    </button>`;
+            });
+            app
