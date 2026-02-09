@@ -24510,25 +24510,42 @@ function aggiornaDatiMacchina(index) {
 }
 
 // SCRIVE IL NOME E MOSTRA LA ZONA NELLA MASCHERA
+function filtraComuni(txt) {
+    const box = document.getElementById('suggComuni');
+    if(txt.length < 2) { box.classList.add('hidden'); return; }
+    
+    // Cerchiamo nel database pulito
+    const match = COMUNI_CLEAN.filter(i => i.c.toLowerCase().includes(txt.toLowerCase())).slice(0, 5);
+    
+    box.innerHTML = match.map(i => `
+        <div class="p-3 hover:bg-blue-50 cursor-pointer border-b text-sm font-bold" 
+             onclick="setComune('${i.c.replace(/'/g, "\\'")}', '${i.z}')">
+            ${i.c} (${i.p})
+        </div>`).join('');
+    box.classList.remove('hidden');
+}
+
 function setComune(nome, zona) {
-    // 1. Scrive il nome nel campo di ricerca
+    // 1. Inserisce il nome nel campo
     document.getElementById('inpComune').value = nome;
     
-    // 2. Nasconde i suggerimenti
+    // 2. Nasconde la tendina dei suggerimenti
     document.getElementById('suggComuni').classList.add('hidden');
     
-    // 3. MOSTRA LA ZONA (Questa è la parte che ti manca!)
-    // Assicurati che l'ID sia 'mostraZona' come nell'HTML della maschera
-    const campoZona = document.getElementById('mostraZona');
-    if (campoZona) {
-        campoZona.value = "Zona " + zona;
+    // 3. Mostra la zona nel campo arancione (ID: mostraZona)
+    const campoVisibile = document.getElementById('mostraZona');
+    if (campoVisibile) {
+        campoVisibile.value = "Zona " + zona;
     }
     
-    // 4. Salva le ore per il calcolo (es: Zona C -> 1100 ore)
+    // 4. Salva le ore per il calcolo matematico (ID: zonaVal)
     const ore = ORE_ZONA[zona] || 0;
-    document.getElementById('zonaVal').value = ore;
+    const campoNascosto = document.getElementById('zonaVal');
+    if (campoNascosto) {
+        campoNascosto.value = ore;
+    }
     
-    console.log("Comune selezionato: " + nome + " | Ore: " + ore);
+    console.log("Selezionato: " + nome + " | Zona: " + zona + " | Ore: " + ore);
 }
         function selectSoggetto(tipo) {
     const app = document.getElementById('app-container');
@@ -24611,6 +24628,7 @@ function calcolaFinale() {
     </script>
 </body>
 </html>
+
 
 
 
