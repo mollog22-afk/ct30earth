@@ -24454,9 +24454,13 @@ window.onload = function() {
 
         const MACCHINE = [
     { nome: "Seleziona modello...", kw: 0, scop: 0 },
-    { nome: "Daikin Altherma 3 R 6kW", kw: 6, scop: 4.5 },
-    { nome: "Mitsubishi Ecodan 8kW", kw: 8, scop: 4.3 },
-    { nome: "Rossato Air Inverter 10kW", kw: 10, scop: 4.1 }
+    { nome: "PDC 6kW", kw: 6, scop: 4.0 },
+    { nome: "PDC 8kW", kw: 8, scop: 4.0 },
+    { nome: "PDC 10kW", kw: 10, scop: 4.0 }
+    { nome: "PDC 12kW", kw: 12, scop: 4.0 }
+    { nome: "PDC 14kW", kw: 14, scop: 4.0 }
+    { nome: "PDC 16kW", kw: 14, scop: 4.0 }
+    { nome: "PDC 18kW", kw: 14, scop: 4.0 }
 ];
 // --- DATABASE E LOGICA ---
 const ORE_ZONA = { 'A': 600, 'B': 850, 'C': 1100, 'D': 1400, 'E': 1700, 'F': 1800 };
@@ -24507,14 +24511,24 @@ function aggiornaDatiMacchina(index) {
 
 // SCRIVE IL NOME E MOSTRA LA ZONA NELLA MASCHERA
 function setComune(nome, zona) {
+    // 1. Scrive il nome nel campo di ricerca
     document.getElementById('inpComune').value = nome;
+    
+    // 2. Nasconde i suggerimenti
     document.getElementById('suggComuni').classList.add('hidden');
     
-    // Mostra "Zona X" nel campo arancione
-    document.getElementById('mostraZona').value = "Zona " + zona;
+    // 3. MOSTRA LA ZONA (Questa è la parte che ti manca!)
+    // Assicurati che l'ID sia 'mostraZona' come nell'HTML della maschera
+    const campoZona = document.getElementById('mostraZona');
+    if (campoZona) {
+        campoZona.value = "Zona " + zona;
+    }
     
-    // Salva il valore delle ore per il calcolo finale
-    document.getElementById('zonaVal').value = ORE_ZONA[zona] || 0;
+    // 4. Salva le ore per il calcolo (es: Zona C -> 1100 ore)
+    const ore = ORE_ZONA[zona] || 0;
+    document.getElementById('zonaVal').value = ore;
+    
+    console.log("Comune selezionato: " + nome + " | Ore: " + ore);
 }
         function selectSoggetto(tipo) {
     const app = document.getElementById('app-container');
@@ -24597,6 +24611,7 @@ function calcolaFinale() {
     </script>
 </body>
 </html>
+
 
 
 
