@@ -24500,15 +24500,14 @@ function selectSoggetto(tipo) {
     const app = document.getElementById('app-container');
     const nav = document.getElementById('navigation-controls');
     if(nav) nav.classList.remove('hidden');
-
-    function aggiornaDatiMacchina(index) {
+    
+function aggiornaDatiMacchina(index) {
     const m = MACCHINE[index];
     if (m.kw > 0) {
         document.getElementById('pmIII').value = m.kw;
         document.getElementById('scopIII').value = m.scop;
-    }
-}
-    function setComune(nome, zona) {
+    
+function setComune(nome, zona) {
     document.getElementById('inpComune').value = nome;
     document.getElementById('suggComuni').classList.add('hidden');
     
@@ -24517,7 +24516,7 @@ function selectSoggetto(tipo) {
     
     // Salva le ore nel campo nascosto per il calcolo
     document.getElementById('zonaVal').value = ORE_ZONA[zona] || 0;
-}
+
     // ... dentro selectSoggetto(tipo) ...
 app.innerHTML = `
     <div class="space-y-6">
@@ -24591,4 +24590,5 @@ function calcolaFinale() {
     </script>
 </body>
 </html>
+
 
