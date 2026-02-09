@@ -24445,7 +24445,7 @@
         ];
 
         // Pulizia dati comuni
-        const COMUNI_CLEAN = (typeof DB_RAW !== 'undefined') ? DB_COMUNI.map(item => {
+        const COMUNI_CLEAN = (typeof DB_RAW !== 'undefined') ? DB_RAW.map(item => {
     const riga = Object.values(item)[0];
     const parti = riga.split(';');
     if (parti.length >= 6) {
@@ -24558,5 +24558,6 @@
     </script>
 </body>
 </html>
+
 
 
