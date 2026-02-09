@@ -24507,7 +24507,6 @@ function aggiornaDatiMacchina(index) {
         document.getElementById('pmIII').value = m.kw;
         document.getElementById('scopIII').value = m.scop;
     }
-}
 
 // SCRIVE IL NOME E MOSTRA LA ZONA NELLA MASCHERA
 function filtraComuni(txt) {
@@ -24531,19 +24530,17 @@ function setComune(nome, zona) {
     
     // 2. Nasconde la tendina dei suggerimenti
     document.getElementById('suggComuni').classList.add('hidden');
-    
+ }   
     // 3. Mostra la zona nel campo arancione (ID: mostraZona)
     const campoVisibile = document.getElementById('mostraZona');
     if (campoVisibile) {
         campoVisibile.value = "Zona " + zona;
-    }
-    
+ }   
     // 4. Salva le ore per il calcolo matematico (ID: zonaVal)
     const ore = ORE_ZONA[zona] || 0;
     const campoNascosto = document.getElementById('zonaVal');
     if (campoNascosto) {
         campoNascosto.value = ore;
-    }
     
     console.log("Selezionato: " + nome + " | Zona: " + zona + " | Ore: " + ore);
 }
@@ -24551,7 +24548,7 @@ function setComune(nome, zona) {
     const app = document.getElementById('app-container');
     const nav = document.getElementById('navigation-controls');
     if(nav) nav.classList.remove('hidden');
-
+}
     app.innerHTML = `
     <div class="space-y-6">
         <h2 class="text-xl font-black border-b pb-4 uppercase italic">Intervento Pompe di Calore (${tipo})</h2>
@@ -24628,6 +24625,7 @@ function calcolaFinale() {
     </script>
 </body>
 </html>
+
 
 
 
