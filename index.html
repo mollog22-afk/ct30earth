@@ -24442,333 +24442,150 @@
     "Regione;Provincia;Comune;alt. Slm;gradi giorno;zona climatica": ";OR;Zerfaliu;15;1067;C"
   }
 ];
+// --- 1. DATI E PULIZIA ---
+const COMUNI_CLEAN = DB_COMUNI.map(item => {
+    const riga = Object.values(item)[0];
+    if (!riga) return null;
+    const parti = riga.split(';');
+    if (parti.length >= 6 && parti[2] && parti[2].trim() !== "" && parti[2].trim() !== "Comune") {
+        return {
+            c: parti[2].trim(), // Comune
+            p: parti[1].trim(), // Provincia
+            z: parti[5].trim()  // Zona
+        };
+    }
+    return null;
+}).filter(item => item !== null);
 
-        // ================================================================
-        // 2. SCRIPT DI PULIZIA (Sanitizzazione dati grezzi)
-        // ================================================================
-        const COMUNI_CLEAN = DB_COMUNI.map(item => {
-            // Prende il valore della stringa complicata
-            const riga = Object.values(item)[0];
-            if (!riga) return null;
+const DB_PDC = [
+    {"t":"Aria/Acqua","m":"ALTHERMA 3 R","kw":6,"s":4.54},
+    // Aggiungi qui le altre pompe di calore...
+];
 
-            // Divide la stringa usando il punto e virgola
-            const parti = riga.split(';');
+const ORE_ZONA = { 'A': 600, 'B': 850, 'C': 1100, 'D': 1400, 'E': 1700, 'F': 1800 };
 
-            // Se la riga ha i dati necessari e non è un'intestazione
-            if (parti.length >= 6 && parti[2] && parti[2].trim() !== "" && parti[2].trim() !== "Comune") {
-                return {
-                    c: parti[2].trim(), // Nome Comune
-                    p: parti[1].trim(), // Provincia
-                    z: parti[5].trim()  // Zona Climatica
-                };
-            }
-            return null;
-        }).filter(item => item !== null); // Rimuove i null (righe vuote o titoli)
+// --- 2. LOGICA DI NAVIGAZIONE ---
+const app = document.getElementById('app-container');
+const nav = document.getElementById('navigation-controls');
 
-        // ================================================================
-        // 3. LOGICA DELL'APPLICAZIONE
-        // ================================================================
+function renderHome() {
+    if(nav) nav.classList.add('hidden');
+    app.innerHTML = `
+        <div class="text-center mb-10">
+            <h2 class="text-2xl font-black text-gray-700 uppercase">Seleziona il Soggetto Responsabile</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <button onclick="selectSoggetto('privato')" class="p-8 border-2 border-gray-50 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center group">
+                <div class="text-4xl mb-3">🏠</div>
+                <span class="block font-bold text-gray-800 uppercase group-hover:text-blue-600">Privato / Condominio</span>
+            </button>
+            <button onclick="selectSoggetto('impresa')" class="p-8 border-2 border-gray-50 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center group">
+                <div class="text-4xl mb-3">🏢</div>
+                <span class="block font-bold text-gray-800 uppercase">Impresa / ESCO</span>
+            </button>
+            <button onclick="selectSoggetto('pa')" class="p-8 border-2 border-gray-50 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center group">
+                <div class="text-4xl mb-3">🏛️</div>
+                <span class="block font-bold text-gray-800 uppercase">Pubblica Amm.</span>
+            </button>
+        </div>`;
+}
 
-        function renderHome() {
-            const container = document.getElementById('app-container');
-            container.innerHTML = `
-                <div class="max-w-md mx-auto mt-10 text-center">
-                    <h2 class="text-2xl font-black mb-6 text-gray-800">CALCOLATORE INCENTIVI</h2>
-                    <label class="block text-left text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Cerca il tuo Comune:</label>
+function selectSoggetto(tipo) {
+    if(nav) nav.classList.remove('hidden');
+    renderInterventi(tipo);
+}
+
+function renderInterventi(tipo) {
+    app.innerHTML = `
+        <div class="flex justify-between items-center mb-8 pb-4 border-b border-gray-100">
+            <h2 class="text-xl font-black text-gray-800 uppercase italic">Interventi</h2>
+            <span class="text-[10px] font-bold bg-blue-600 text-white px-3 py-1 rounded-md uppercase">${tipo}</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button onclick="renderIIIA('${tipo}')" class="p-4 border border-blue-200 bg-blue-50 rounded-xl text-left text-sm font-bold text-blue-800 hover:bg-blue-100 transition-all">
+                III.A - Pompe di Calore
+            </button>
+        </div>`;
+}
+
+function renderIIIA(sotto) {
+    app.innerHTML = `
+        <div class="space-y-6">
+            <h2 class="text-2xl font-black text-blue-800 uppercase italic border-b pb-4">Calcolo III.A - Pompe di Calore</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="space-y-4 bg-gray-50 p-6 rounded-2xl border border-gray-100">
                     <div class="relative">
-                        <input type="text" id="comune-input" 
-                            class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition-all text-lg"
-                            placeholder="Es: Torino..."
-                            autocomplete="off"
-                            oninput="handleSearch(this.value)">
-                        <div id="suggestions" class="suggestions-box text-left"></div>
+                        <label class="block text-[10px] font-black text-blue-500 mb-1 uppercase">📍 Località (Comune)</label>
+                        <input type="text" id="inpComune" class="w-full p-2 border rounded-xl text-sm font-bold" placeholder="Cerca comune..." onkeyup="filtraComuni(this.value)">
+                        <div id="suggComuni" class="suggestions-box"></div>
+                        <div id="infoZona" class="text-[10px] mt-1 italic text-gray-500"></div>
                     </div>
-                </div>
-            `;
-        }
 
-        function handleSearch(query) {
-            const box = document.getElementById('suggestions');
-            if (query.length < 2) {
-                box.style.display = 'none';
-                return;
-            }
-
-            // Cerca nei dati puliti (COMUNI_CLEAN)
-            const filtered = COMUNI_CLEAN.filter(item => 
-                item.c.toLowerCase().includes(query.toLowerCase())
-            ).slice(0, 10);
-
-            if (filtered.length > 0) {
-                box.innerHTML = filtered.map(item => `
-                    <div class="suggestion-item" onclick="selectComune('${item.c.replace(/'/g, "\\'")}', '${item.z}')">
-                        <span class="font-bold">${item.c}</span> (${item.p}) - <span class="text-blue-600 font-bold">Zona ${item.z}</span>
-                    </div>
-                `).join('');
-                box.style.display = 'block';
-            } else {
-                box.style.display = 'none';
-            }
-        }
-
-        function selectComune(nome, zona) {
-            document.getElementById('comune-input').value = nome;
-            document.getElementById('suggestions').style.display = 'none';
-            
-            // Mostra un feedback per ora (qui poi aggiungeremo i calcoli)
-            const container = document.getElementById('app-container');
-            container.innerHTML += `
-                <div class="mt-8 p-6 bg-blue-50 rounded-xl border border-blue-100 animate-pulse">
-                    <p class="text-blue-800 font-bold">Hai selezionato: ${nome}</p>
-                    <p class="text-blue-600">Zona Climatica: <strong>${zona}</strong></p>
-                    <p class="text-xs mt-2 text-blue-400 italic">Dati pronti per il calcolo del Conto Termico.</p>
-                </div>
-            `;
-            document.getElementById('navigation-controls').classList.remove('hidden');
-        }
-
-        // Avvio dell'app
-        window.onload = renderHome;
-
-        // --- INCOLLA QUI L'ELENCO DELLE POMPE DI CALORE ---
-        // Formato suggerito: {t: "Tipo", m: "Modello", kw: 6, s: 4.5}
-        const DB_PDC = [
-            {"t":"Aria/Acqua","m":"ALTHERMA 3 R","kw":6,"s":4.54},
-            // ... incolla qui tutte le altre righe
-        ];
-
-        const ORE_ZONA = { 'A': 600, 'B': 850, 'C': 1100, 'D': 1400, 'E': 1700, 'F': 1800 };
-
-        // ================================================================
-        // 2. LOGICA APPLICAZIONE
-        // ================================================================
-
-        const app = document.getElementById('app-container');
-        const nav = document.getElementById('navigation-controls');
-
-        function renderHome() {
-            nav.classList.add('hidden');
-            app.innerHTML = `
-                <div class="text-center mb-10">
-                    <h2 class="text-2xl font-black text-gray-700 uppercase">Seleziona il Soggetto Responsabile</h2>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <button onclick="selectSoggetto('privato')" class="p-8 border-2 border-gray-50 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center group">
-                        <div class="text-4xl mb-3">🏠</div>
-                        <span class="block font-bold text-gray-800 uppercase group-hover:text-blue-600">Privato / Condominio</span>
-                    </button>
-                    <button onclick="selectSoggetto('impresa')" class="p-8 border-2 border-gray-50 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center group">
-                        <div class="text-4xl mb-3">🏢</div>
-                        <span class="block font-bold text-gray-800 uppercase">Impresa / ESCO</span>
-                    </button>
-                    <button onclick="selectSoggetto('pa')" class="p-8 border-2 border-gray-50 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center group">
-                        <div class="text-4xl mb-3">🏛️</div>
-                        <span class="block font-bold text-gray-800 uppercase">Pubblica Amm.</span>
-                    </button>
-                </div>`;
-        }
-
-        function selectSoggetto(tipo) {
-            nav.classList.remove('hidden');
-            renderInterventi(tipo);
-        }
-
-        function renderInterventi(tipo) {
-            app.innerHTML = `
-                <div class="flex justify-between items-center mb-8 pb-4 border-b border-gray-100">
-                    <h2 class="text-xl font-black text-gray-800 uppercase italic">Interventi</h2>
-                    <span class="text-[10px] font-bold bg-blue-600 text-white px-3 py-1 rounded-md uppercase">${tipo}</span>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <button onclick="renderIIIA('${tipo}')" class="p-4 border border-blue-200 bg-blue-50 rounded-xl text-left text-sm font-bold text-blue-800 hover:bg-blue-100 transition-all">
-                        III.A - Pompe di Calore
-                    </button>
-                </div>`;
-        }
-
-        function renderIIIA(sotto) {
-            app.innerHTML = `
-                <div class="space-y-6">
-                    <h2 class="text-2xl font-black text-blue-800 uppercase italic border-b pb-4">Calcolo III.A - Pompe di Calore</h2>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div class="space-y-4 bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                            <div class="relative">
-                                <label class="block text-[10px] font-black text-blue-500 mb-1 uppercase">📍 Località (Comune)</label>
-                                <input type="text" id="inpComune" class="w-full p-2 border rounded-xl text-sm font-bold" placeholder="Cerca comune..." onkeyup="filtraComuni(this.value)">
-                                <div id="suggComuni" class="suggestions-box"></div>
-                                <div id="infoZona" class="text-[10px] mt-1 italic text-gray-500"></div>
-                            </div>
-
-                            <div class="relative">
-                                <label class="block text-[10px] font-black text-blue-500 mb-1 uppercase">🔎 Ricerca Pompa di Calore</label>
-                                <input type="text" id="inpPdc" class="w-full p-2 border rounded-xl text-sm font-bold" placeholder="Marca o modello..." onkeyup="filtraPdc(this.value)">
-                                <div id="suggPdc" class="suggestions-box"></div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4">
-                                <div><label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">Potenza (kW)</label>
-                                <input type="number" id="pmIII" class="w-full p-3 border rounded-xl bg-white font-bold" step="0.1"></div>
-                                <div><label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">SCOP</label>
-                                <input type="number" id="scopIII" class="w-full p-3 border rounded-xl bg-white font-bold" step="0.01"></div>
-                            </div>
-                            
-                            <div><label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">Spesa Stimata (€)</label>
-                            <input type="number" id="spesaIII" class="w-full p-3 border rounded-xl" placeholder="Es: 10000"></div>
-                            
-                            <input type="hidden" id="zonaVal" value="0">
-                            <button onclick="calcolaFinale('${sotto}')" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg uppercase text-sm">Calcola Incentivo</button>
-                        </div>
-                        
-                        <div id="res-box" class="hidden p-8 bg-gray-900 text-white rounded-2xl flex flex-col justify-center shadow-xl border-t-4 border-blue-500">
-                            <p class="text-[10px] font-black uppercase text-gray-400 mb-2">Incentivo Netto Erogabile</p>
-                            <p id="valErogabile" class="text-5xl font-black text-white mb-6">€ 0,00</p>
-                            <div id="info-erogazione" class="text-xs bg-blue-900/40 p-4 rounded-lg italic"></div>
-                        </div>
-                    </div>
-                </div>`;
-        }
-        ];
-
-        // 2. INCOLLA QUI LO SCRIPT DI PULIZIA
-        const COMUNI_CLEAN = DB_COMUNI.map(item => {
-            const riga = Object.values(item)[0];
-            if (!riga) return null;
-            const parti = riga.split(';');
-            if (parti.length >= 6 && parti[2] && parti[2].trim() !== "" && parti[2].trim() !== "Comune") {
-                return {
-                    c: parti[2].trim(), // Nome Comune
-                    p: parti[1].trim(), // Provincia
-                    z: parti[5].trim()  // Zona Climatica
-                };
-            }
-            return null;
-        }).filter(item => item !== null);
-
-        // 3. INCOLLA QUI LE FUNZIONI PER IL MENU (handleSearch, selectComune, ecc.)
-        function renderHome() {
-            const container = document.getElementById('app-container');
-            container.innerHTML = `
-                <div class="max-w-md mx-auto mt-10">
-                    <label class="block text-sm font-bold text-gray-700 mb-2 uppercase">Cerca il tuo Comune:</label>
                     <div class="relative">
-                        <input type="text" id="comune-input" 
-                            class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition-all"
-                            placeholder="Inizia a scrivere..."
-                            autocomplete="off"
-                            oninput="handleSearch(this.value)">
-                        <div id="suggestions" class="suggestions-box"></div>
+                        <label class="block text-[10px] font-black text-blue-500 mb-1 uppercase">🔎 Ricerca Pompa di Calore</label>
+                        <input type="text" id="inpPdc" class="w-full p-2 border rounded-xl text-sm font-bold" placeholder="Marca o modello..." onkeyup="filtraPdc(this.value)">
+                        <div id="suggPdc" class="suggestions-box"></div>
                     </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">Potenza (kW)</label>
+                        <input type="number" id="pmIII" class="w-full p-3 border rounded-xl bg-white font-bold" step="0.1"></div>
+                        <div><label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">SCOP</label>
+                        <input type="number" id="scopIII" class="w-full p-3 border rounded-xl bg-white font-bold" step="0.01"></div>
+                    </div>
+                    
+                    <div><label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">Spesa Stimata (€)</label>
+                    <input type="number" id="spesaIII" class="w-full p-3 border rounded-xl" placeholder="Es: 10000"></div>
+                    
+                    <input type="hidden" id="zonaVal" value="0">
+                    <button onclick="calcolaFinale()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg uppercase text-sm">Calcola Incentivo</button>
                 </div>
-            `;
-        }
+                
+                <div id="res-box" class="hidden p-8 bg-gray-900 text-white rounded-2xl flex flex-col justify-center shadow-xl border-t-4 border-blue-500">
+                    <p class="text-[10px] font-black uppercase text-gray-400 mb-2">Incentivo Netto Erogabile</p>
+                    <p id="valErogabile" class="text-5xl font-black text-white mb-6">€ 0,00</p>
+                    <div id="info-erogazione" class="text-xs bg-blue-900/40 p-4 rounded-lg italic"></div>
+                </div>
+            </div>
+        </div>`;
+}
 
-        function handleSearch(query) {
-            const box = document.getElementById('suggestions');
-            if (query.length < 2) {
-                box.style.display = 'none';
-                return;
-            }
-
-            // NOTA: Qui usiamo COMUNI_CLEAN
-            const filtered = COMUNI_CLEAN.filter(item => 
-                item.c.toLowerCase().includes(query.toLowerCase())
-            ).slice(0, 10);
-
-            if (filtered.length > 0) {
-                box.innerHTML = filtered.map(item => `
-                    <div class="suggestion-item" onclick="selectComune('${item.c.replace(/'/g, "\\'")}', '${item.z}')">
-                        <span class="font-bold">${item.c}</span> (${item.p}) - Zona ${item.z}
-                    </div>
-                `).join('');
-                box.style.display = 'block';
-            } else {
-                box.style.display = 'none';
-            }
-        }
-
-        function selectComune(nome, zona) {
-            document.getElementById('comune-input').value = nome;
-            document.getElementById('suggestions').style.display = 'none';
-            alert("Comune: " + nome + "\nZona Climatica: " + zona);
-        }
-
-        // Fai partire tutto all'avvio
-        window.onload = renderHome;
-
-           // --- FUNZIONI DI RICERCA ---
-
-        function filtraComuni(txt) {
-            const box = document.getElementById('suggComuni');
-            if(txt.length < 2) { box.style.display = 'none'; return; }
-            // Filtra sulla chiave "c" (comune)
-            const match = DB_COMUNI.filter(item => item.c.toLowerCase().includes(txt.toLowerCase())).slice(0, 10);
-            box.innerHTML = match.map(item => `
-                <div class="suggestion-item" onclick="setComune('${item.c.replace(/'/g, "\\'")}', '${item.z}')">
-                    ${item.c} (${item.p})
-                </div>`).join('');
-            box.style.display = 'block';
-        }
-
-        function setComune(nome, zona) {
-            document.getElementById('inpComune').value = nome;
-            document.getElementById('suggComuni').style.display = 'none';
-            const ore = ORE_ZONA[zona] || 0;
-            document.getElementById('zonaVal').value = ore;
-            document.getElementById('infoZona').innerHTML = `Zona <b>${zona}</b> (${ore} ore)`;
-        }
-
-        function filtraPdc(txt) {
-            const box = document.getElementById('suggPdc');
-            if(txt.length < 2) { box.style.display = 'none'; return; }
-            // Filtra su "m" (modello) o "t" (tipologia)
-            const match = DB_PDC.filter(item => (item.m + item.t).toLowerCase().includes(txt.toLowerCase())).slice(0, 10);
-            box.innerHTML = match.map(item => `
-                <div class="suggestion-item" onclick="setPdc('${item.m.replace(/'/g, "\\'")}', ${item.kw}, ${item.s}, '${item.t}')">
-                    <span class="text-blue-600 font-bold">[${item.t}]</span> ${item.m}
-                </div>`).join('');
-            box.style.display = 'block';
-        }
-
-        function setPdc(modello, kw, scop, tipo) {
-            document.getElementById('inpPdc').value = `[${tipo}] ${modello}`;
-            document.getElementById('suggPdc').style.display = 'none';
-            document.getElementById('pmIII').value = kw;
-            document.getElementById('scopIII').value = scop;
-        }
-
-        function calcolaFinale(sotto) {
-            const spesa = parseFloat(document.getElementById('spesaIII').value) || 0;
-            const pm = parseFloat(document.getElementById('pmIII').value) || 0;
-            const quf = parseFloat(document.getElementById('zonaVal').value) || 0;
-            const scop = parseFloat(document.getElementById('scopIII').value) || 0;
-            
-            if(!quf || !pm || !scop) { alert("Assicurati di aver selezionato Comune e Pompa di Calore!"); return; }
-
-            const ci = 0.11; // Coefficiente base
-            const anni = pm <= 35 ? 2 : 5;
-            const calcolato = ci * pm * quf * (1 - (1/scop)) * anni;
-            
-            const finale = Math.min(calcolato, spesa * 0.65);
-
-            document.getElementById('res-box').classList.remove('hidden');
-            document.getElementById('valErogabile').innerText = "€ " + finale.toLocaleString('it-IT', {minimumFractionDigits:2});
-            
-            const info = document.getElementById('info-erogazione');
-            // LIMITE 15.000 EURO PER RATA UNICA
-            if (finale <= 15000) {
-                info.innerHTML = "Importo inferiore a 15.000€: erogazione in un'unica soluzione.";
-            } else {
-                info.innerHTML = `Erogazione in ${anni} rate annuali da € ${(finale/anni).toLocaleString('it-IT', {minimumFractionDigits:2})}.`;
-            }
-        }
-
-        // Avvio iniziale
-        renderHome();
-        </script>
-    </body>
-</html>
+// --- 3. FUNZIONI DI SUPPORTO ---
+function filtraComuni(txt) {
+    const box = document.getElementById('suggComuni');
+    if(txt.length < 2) { box.style.display = 'none'; return; }
     
+    const match = COMUNI_CLEAN.filter(item => item.c.toLowerCase().includes(txt.toLowerCase())).slice(0, 10);
+    box.innerHTML = match.map(item => `
+        <div class="suggestion-item p-2 hover:bg-gray-100 cursor-pointer" onclick="setComune('${item.c.replace(/'/g, "\\'")}', '${item.z}')">
+            ${item.c} (${item.p}) - <span class="text-blue-600 font-bold">Zona ${item.z}</span>
+        </div>`).join('');
+    box.style.display = 'block';
+}
 
+function setComune(nome, zona) {
+    document.getElementById('inpComune').value = nome;
+    document.getElementById('suggComuni').style.display = 'none';
+    const ore = ORE_ZONA[zona] || 0;
+    document.getElementById('zonaVal').value = ore;
+    document.getElementById('infoZona').innerHTML = `Zona <b>${zona}</b> (${ore} ore)`;
+}
+
+function filtraPdc(txt) {
+    const box = document.getElementById('suggPdc');
+    if(txt.length < 2) { box.style.display = 'none'; return; }
+    
+    const match = DB_PDC.filter(item => (item.m + item.t).toLowerCase().includes(txt.toLowerCase())).slice(0, 10);
+    box.innerHTML = match.map(item => `
+        <div class="suggestion-item p-2 hover:bg-gray-100 cursor-pointer" onclick="setPdc('${item.m.replace(/'/g, "\\'")}', ${item.kw}, ${item.s}, '${item.t}')">
+            <span class="text-blue-600 font-bold">[${item.t}]</span> ${item.m}
+        </div>`).join('');
+    box.style.display = 'block';
+}
+
+function setPdc(modello, kw, scop, tipo) {
+    document.getElementById('inpPdc').value = `[${tipo}] ${modello}`;
+    document.getElementById('suggP
 
 
 
