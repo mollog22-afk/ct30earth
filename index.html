@@ -24452,6 +24452,12 @@ window.onload = function() {
     renderHome();
 };
 
+        const MACCHINE = [
+    { nome: "Seleziona modello...", kw: 0, scop: 0 },
+    { nome: "Daikin Altherma 3 R 6kW", kw: 6, scop: 4.5 },
+    { nome: "Mitsubishi Ecodan 8kW", kw: 8, scop: 4.3 },
+    { nome: "Rossato Air Inverter 10kW", kw: 10, scop: 4.1 }
+];
 // --- DATABASE E LOGICA ---
 const ORE_ZONA = { 'A': 600, 'B': 850, 'C': 1100, 'D': 1400, 'E': 1700, 'F': 1800 };
 
@@ -24494,33 +24500,63 @@ function selectSoggetto(tipo) {
     const app = document.getElementById('app-container');
     const nav = document.getElementById('navigation-controls');
     if(nav) nav.classList.remove('hidden');
+
+    function aggiornaDatiMacchina(index) {
+    const m = MACCHINE[index];
+    if (m.kw > 0) {
+        document.getElementById('pmIII').value = m.kw;
+        document.getElementById('scopIII').value = m.scop;
+    }
+}
+    function setComune(nome, zona) {
+    document.getElementById('inpComune').value = nome;
+    document.getElementById('suggComuni').classList.add('hidden');
     
-    app.innerHTML = `
-        <div class="space-y-6">
-            <h2 class="text-xl font-black border-b pb-4 uppercase italic">Intervento Pompe di Calore (${tipo})</h2>
-            <div class="bg-gray-50 p-6 rounded-2xl border-2">
-                <div class="mb-4 relative">
+    // Scrive la zona nel nuovo campo visibile
+    document.getElementById('mostraZona').value = "Zona " + zona;
+    
+    // Salva le ore nel campo nascosto per il calcolo
+    document.getElementById('zonaVal').value = ORE_ZONA[zona] || 0;
+}
+    // ... dentro selectSoggetto(tipo) ...
+app.innerHTML = `
+    <div class="space-y-6">
+        <h2 class="text-xl font-black border-b pb-4 uppercase italic">Intervento Pompe di Calore (${tipo})</h2>
+        <div class="bg-gray-50 p-6 rounded-2xl border-2">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="relative">
                     <label class="block text-[10px] font-black text-blue-500 mb-1 uppercase">📍 Cerca Comune</label>
-                    <input type="text" id="inpComune" class="w-full p-3 border-2 rounded-xl font-bold" onkeyup="filtraComuni(this.value)" placeholder="Es: Alpignano">
-                    <div id="suggComuni" class="absolute z-50 w-full bg-white shadow-xl rounded-xl hidden max-h-40 overflow-y-auto border"></div>
+                    <input type="text" id="inpComune" class="w-full p-3 border-2 rounded-xl font-bold" onkeyup="filtraComuni(this.value)" placeholder="Es: Rende">
+                    <div id="suggComuni" class="absolute z-50 w-full bg-white shadow-xl rounded-xl hidden border"></div>
                 </div>
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">Potenza (kW)</label>
-                        <input type="number" id="pmIII" class="w-full p-3 border-2 rounded-xl font-bold" step="0.1" value="6">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">SCOP</label>
-                        <input type="number" id="scopIII" class="w-full p-3 border-2 rounded-xl font-bold" step="0.01" value="4.5">
-                    </div>
+                <div>
+                    <label class="block text-[10px] font-black text-orange-500 mb-1 uppercase">☀️ Zona Climatica</label>
+                    <input type="text" id="mostraZona" class="w-full p-3 border-2 rounded-xl font-bold bg-orange-50 text-orange-700" readonly placeholder="-">
                 </div>
-                <input type="hidden" id="zonaVal" value="0">
-                <button onclick="calcolaFinale()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl uppercase shadow-lg">Calcola ora</button>
             </div>
-            <div id="res-box" class="hidden p-8 bg-blue-900 text-white rounded-2xl text-center">
-                <p class="text-xs uppercase opacity-70">Incentivo Totale</p>
-                <h2 id="valErogabile" class="text-4xl font-black">€ 0,00</h2>
+
+            <div class="mb-4">
+                <label class="block text-[10px] font-black text-blue-500 mb-1 uppercase">⚙️ Seleziona Modello</label>
+                <select id="selectPdc" class="w-full p-3 border-2 rounded-xl font-bold bg-white" onchange="aggiornaDatiMacchina(this.value)">
+                    ${MACCHINE.map((m, index) => `<option value="${index}">${m.nome}</option>`).join('')}
+                </select>
             </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">Potenza (kW)</label>
+                    <input type="number" id="pmIII" class="w-full p-3 border-2 rounded-xl font-bold" step="0.1">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">SCOP</label>
+                    <input type="number" id="scopIII" class="w-full p-3 border-2 rounded-xl font-bold" step="0.01">
+                </div>
+            </div>
+            
+            <input type="hidden" id="zonaVal" value="0">
+            <button onclick="calcolaFinale()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl uppercase shadow-lg">Calcola ora</button>
+        </div>
         </div>`;
 }
 
@@ -24555,3 +24591,4 @@ function calcolaFinale() {
     </script>
 </body>
 </html>
+
