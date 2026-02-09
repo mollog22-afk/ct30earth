@@ -24442,109 +24442,110 @@
     "Regione;Provincia;Comune;alt. Slm;gradi giorno;zona climatica": ";OR;Zerfaliu;15;1067;C"
   }
 ];
-// --- 1. DATI (DATABASE) ---
-// Qui il tuo DB_COMUNI deve essere già presente sopra
-const COMUNI_CLEAN = DB_COMUNI.map(item => {
+// Verifica che gli elementi HTML esistano prima di partire
+window.onload = function() {
+    const app = document.getElementById('app-container');
+    if (!app) {
+        alert("Errore tecnico: Manca l'elemento 'app-container' nel tuo HTML. Controlla di avere un <div id='app-container'></div>");
+        return;
+    }
+    renderHome();
+};
+
+// --- DATABASE E LOGICA ---
+const ORE_ZONA = { 'A': 600, 'B': 850, 'C': 1100, 'D': 1400, 'E': 1700, 'F': 1800 };
+
+// Pulizia dati comuni
+const COMUNI_CLEAN = (typeof DB_COMUNI !== 'undefined') ? DB_COMUNI.map(item => {
     const riga = Object.values(item)[0];
-    if (!riga) return null;
     const parti = riga.split(';');
-    if (parti.length >= 6 && parti[2] && parti[2].trim() !== "" && parti[2].trim() !== "Comune") {
+    if (parti.length >= 6) {
         return { c: parti[2].trim(), p: parti[1].trim(), z: parti[5].trim() };
     }
     return null;
-}).filter(item => item !== null);
+}).filter(i => i) : [];
 
-const DB_PDC = [
-    {"t":"Aria/Acqua","m":"ALTHERMA 3 R","kw":6,"s":4.54},
-    {"t":"Aria/Aria","m":"DAIKIN EMURA","kw":2.5,"s":5.1} // Esempio, aggiungi le tue
-];
-
-const ORE_ZONA = { 'A': 600, 'B': 850, 'C': 1100, 'D': 1400, 'E': 1700, 'F': 1800 };
-
-// --- 2. GESTIONE INTERFACCIA ---
-const app = document.getElementById('app-container');
-const nav = document.getElementById('navigation-controls');
-
-// Questa funzione crea i bottoni con le icone
 function renderHome() {
+    const app = document.getElementById('app-container');
+    const nav = document.getElementById('navigation-controls');
     if(nav) nav.classList.add('hidden');
+    
     app.innerHTML = `
         <div class="text-center mb-10">
             <h2 class="text-2xl font-black text-gray-700 uppercase">Seleziona il Soggetto Responsabile</h2>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <button onclick="selectSoggetto('privato')" class="p-8 border-2 border-gray-100 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center group bg-white shadow-sm">
+            <button onclick="selectSoggetto('Privato')" class="p-8 border-2 border-gray-200 rounded-2xl hover:border-blue-500 bg-white shadow-sm transition-all group">
                 <div class="text-5xl mb-4 group-hover:scale-110 transition-transform">🏠</div>
-                <span class="block font-bold text-gray-800 uppercase group-hover:text-blue-600">Privato / Condominio</span>
+                <span class="block font-bold text-gray-800 uppercase">Privato</span>
             </button>
-            <button onclick="selectSoggetto('impresa')" class="p-8 border-2 border-gray-100 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center group bg-white shadow-sm">
+            <button onclick="selectSoggetto('Impresa')" class="p-8 border-2 border-gray-200 rounded-2xl hover:border-blue-500 bg-white shadow-sm transition-all group">
                 <div class="text-5xl mb-4 group-hover:scale-110 transition-transform">🏢</div>
-                <span class="block font-bold text-gray-800 uppercase group-hover:text-blue-600">Impresa / ESCO</span>
+                <span class="block font-bold text-gray-800 uppercase">Impresa</span>
             </button>
-            <button onclick="selectSoggetto('pa')" class="p-8 border-2 border-gray-100 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center group bg-white shadow-sm">
+            <button onclick="selectSoggetto('PA')" class="p-8 border-2 border-gray-200 rounded-2xl hover:border-blue-500 bg-white shadow-sm transition-all group">
                 <div class="text-5xl mb-4 group-hover:scale-110 transition-transform">🏛️</div>
-                <span class="block font-bold text-gray-800 uppercase group-hover:text-blue-600">Pubblica Amm.</span>
+                <span class="block font-bold text-gray-800 uppercase">Pubblica Amm.</span>
             </button>
         </div>`;
 }
 
 function selectSoggetto(tipo) {
+    const app = document.getElementById('app-container');
+    const nav = document.getElementById('navigation-controls');
     if(nav) nav.classList.remove('hidden');
-    renderInterventi(tipo);
-}
-
-function renderInterventi(tipo) {
+    
     app.innerHTML = `
-        <div class="flex justify-between items-center mb-8 pb-4 border-b border-gray-100">
-            <h2 class="text-xl font-black text-gray-800 uppercase italic">Interventi Disponibili</h2>
-            <span class="text-xs font-bold bg-blue-600 text-white px-3 py-1 rounded-full uppercase">${tipo}</span>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button onclick="renderIIIA('${tipo}')" class="p-6 border-2 border-blue-100 bg-blue-50 rounded-2xl text-left hover:bg-blue-100 transition-all shadow-sm">
-                <div class="text-2xl mb-2">🌀</div>
-                <div class="font-black text-blue-900 uppercase text-sm">Intervento 2.A</div>
-                <div class="text-xs text-blue-700 font-bold">Pompe di Calore</div>
-            </button>
+        <div class="space-y-6">
+            <h2 class="text-xl font-black border-b pb-4 uppercase italic">Intervento Pompe di Calore (${tipo})</h2>
+            <div class="bg-gray-50 p-6 rounded-2xl border-2">
+                <div class="mb-4 relative">
+                    <label class="block text-[10px] font-black text-blue-500 mb-1 uppercase">📍 Cerca Comune</label>
+                    <input type="text" id="inpComune" class="w-full p-3 border-2 rounded-xl font-bold" onkeyup="filtraComuni(this.value)" placeholder="Es: Alpignano">
+                    <div id="suggComuni" class="absolute z-50 w-full bg-white shadow-xl rounded-xl hidden max-h-40 overflow-y-auto border"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">Potenza (kW)</label>
+                        <input type="number" id="pmIII" class="w-full p-3 border-2 rounded-xl font-bold" step="0.1" value="6">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">SCOP</label>
+                        <input type="number" id="scopIII" class="w-full p-3 border-2 rounded-xl font-bold" step="0.01" value="4.5">
+                    </div>
+                </div>
+                <input type="hidden" id="zonaVal" value="0">
+                <button onclick="calcolaFinale()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl uppercase shadow-lg">Calcola ora</button>
+            </div>
+            <div id="res-box" class="hidden p-8 bg-blue-900 text-white rounded-2xl text-center">
+                <p class="text-xs uppercase opacity-70">Incentivo Totale</p>
+                <h2 id="valErogabile" class="text-4xl font-black">€ 0,00</h2>
+            </div>
         </div>`;
 }
 
-function renderIIIA(sotto) {
-    app.innerHTML = `
-        <div class="space-y-6 animate-fade-in">
-            <h2 class="text-2xl font-black text-blue-800 uppercase italic border-b pb-4">Calcolo Incentivo Pompe di Calore</h2>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="space-y-4 bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-inner">
-                    <div class="relative">
-                        <label class="block text-[10px] font-black text-blue-500 mb-1 uppercase">📍 Località (Comune)</label>
-                        <input type="text" id="inpComune" class="w-full p-3 border-2 rounded-xl text-sm font-bold focus:border-blue-500 outline-none" placeholder="Cerca il tuo comune..." onkeyup="filtraComuni(this.value)">
-                        <div id="suggComuni" class="suggestions-box absolute z-50 w-full bg-white shadow-xl rounded-b-xl border border-t-0 hidden"></div>
-                        <div id="infoZona" class="text-[10px] mt-1 font-bold text-gray-500"></div>
-                    </div>
+function filtraComuni(txt) {
+    const box = document.getElementById('suggComuni');
+    if(txt.length < 2) { box.classList.add('hidden'); return; }
+    const match = COMUNI_CLEAN.filter(i => i.c.toLowerCase().includes(txt.toLowerCase())).slice(0, 5);
+    box.innerHTML = match.map(i => `<div class="p-3 hover:bg-blue-50 cursor-pointer border-b" onclick="setComune('${i.c.replace(/'/g, "\\'")}', '${i.z}')">${i.c} (${i.p})</div>`).join('');
+    box.classList.remove('hidden');
+}
 
-                    <div class="relative">
-                        <label class="block text-[10px] font-black text-blue-500 mb-1 uppercase">🔎 Modello Pompa di Calore</label>
-                        <input type="text" id="inpPdc" class="w-full p-3 border-2 rounded-xl text-sm font-bold focus:border-blue-500 outline-none" placeholder="Marca o modello..." onkeyup="filtraPdc(this.value)">
-                        <div id="suggPdc" class="suggestions-box absolute z-50 w-full bg-white shadow-xl rounded-b-xl border border-t-0 hidden"></div>
-                    </div>
+function setComune(nome, zona) {
+    document.getElementById('inpComune').value = nome;
+    document.getElementById('suggComuni').classList.add('hidden');
+    document.getElementById('zonaVal').value = ORE_ZONA[zona] || 0;
+}
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">Potenza Term. (kW)</label>
-                            <input type="number" id="pmIII" class="w-full p-3 border-2 rounded-xl bg-white font-bold" step="0.1">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">SCOP</label>
-                            <input type="number" id="scopIII" class="w-full p-3 border-2 rounded-xl bg-white font-bold" step="0.01">
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-[10px] font-black text-gray-500 mb-1 uppercase">Spesa dell'intervento (€)</label>
-                        <input type="number" id="spesaIII" class="w-full p-3 border-2 rounded-xl" placeholder="Totale fattura">
-                    </div>
-                    
-                    <input type="hidden" id="zonaVal" value="0">
-                    <button onclick="calcolaFinale()" class="w-full bg-blue-600 text-white font-
+function calcolaFinale() {
+    const pm = parseFloat(document.getElementById('pmIII').value) || 0;
+    const quf = parseFloat(document.getElementById('zonaVal').value) || 0;
+    const scop = parseFloat(document.getElementById('scopIII').value) || 0;
+    
+    if(!quf) { alert("Seleziona un comune dai suggerimenti!"); return; }
 
-
-
+    const finale = 0.11 * pm * quf * (1 - (1/scop)) * 2;
+    document.getElementById('res-box').classList.remove('hidden');
+    document.getElementById('valErogabile').innerText = "€ " + finale.toLocaleString('it-IT', {minimumFractionDigits:2});
+}
