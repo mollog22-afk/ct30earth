@@ -24543,7 +24543,79 @@
                     </div>
                 </div>`;
         }
+<script>
+        // 1. Il tuo elenco originale (lascialo come lo hai incollato)
+        const DB_COMUNI = [
+            // ... tutte le tue righe con i punti e virgola ...
+        ];
 
+        // 2. INCOLLA QUI LO SCRIPT DI PULIZIA
+        const COMUNI_CLEAN = DB_COMUNI.map(item => {
+            const riga = Object.values(item)[0];
+            if (!riga) return null;
+            const parti = riga.split(';');
+            if (parti.length >= 6 && parti[2] && parti[2].trim() !== "" && parti[2].trim() !== "Comune") {
+                return {
+                    c: parti[2].trim(), // Nome Comune
+                    p: parti[1].trim(), // Provincia
+                    z: parti[5].trim()  // Zona Climatica
+                };
+            }
+            return null;
+        }).filter(item => item !== null);
+
+        // 3. INCOLLA QUI LE FUNZIONI PER IL MENU (handleSearch, selectComune, ecc.)
+        function renderHome() {
+            const container = document.getElementById('app-container');
+            container.innerHTML = `
+                <div class="max-w-md mx-auto mt-10">
+                    <label class="block text-sm font-bold text-gray-700 mb-2 uppercase">Cerca il tuo Comune:</label>
+                    <div class="relative">
+                        <input type="text" id="comune-input" 
+                            class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition-all"
+                            placeholder="Inizia a scrivere..."
+                            autocomplete="off"
+                            oninput="handleSearch(this.value)">
+                        <div id="suggestions" class="suggestions-box"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleSearch(query) {
+            const box = document.getElementById('suggestions');
+            if (query.length < 2) {
+                box.style.display = 'none';
+                return;
+            }
+
+            // NOTA: Qui usiamo COMUNI_CLEAN
+            const filtered = COMUNI_CLEAN.filter(item => 
+                item.c.toLowerCase().includes(query.toLowerCase())
+            ).slice(0, 10);
+
+            if (filtered.length > 0) {
+                box.innerHTML = filtered.map(item => `
+                    <div class="suggestion-item" onclick="selectComune('${item.c.replace(/'/g, "\\'")}', '${item.z}')">
+                        <span class="font-bold">${item.c}</span> (${item.p}) - Zona ${item.z}
+                    </div>
+                `).join('');
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+            }
+        }
+
+        function selectComune(nome, zona) {
+            document.getElementById('comune-input').value = nome;
+            document.getElementById('suggestions').style.display = 'none';
+            alert("Comune: " + nome + "\nZona Climatica: " + zona);
+        }
+
+        // Fai partire tutto all'avvio
+        window.onload = renderHome;
+
+    </script>
         // --- FUNZIONI DI RICERCA ---
 
         function filtraComuni(txt) {
@@ -24617,3 +24689,4 @@
 </body>
 </html>
     
+
