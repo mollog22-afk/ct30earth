@@ -24445,11 +24445,15 @@
         ];
 
         // Pulizia dati comuni
-        const COMUNI_CLEAN = DB_RAW.map(riga => {
-            const p = riga.split(';');
-            if (p.length >= 6) return { c: p[2].trim(), pr: p[1], z: p[5].trim() };
-            return null;
-        }).filter(i => i);
+        const COMUNI_CLEAN = (typeof DB_RAW !== 'undefined') ? DB_COMUNI.map(item => {
+    const riga = Object.values(item)[0];
+    const parti = riga.split(';');
+    if (parti.length >= 6) {
+        return { c: parti[2].trim(), p: parti[1].trim(), z: parti[5].trim() };
+    }
+    return null;
+}).filter(i => i) : [];
+        
 
         // FUNZIONE INIZIALE
         function renderHome() {
@@ -24554,4 +24558,5 @@
     </script>
 </body>
 </html>
+
 
