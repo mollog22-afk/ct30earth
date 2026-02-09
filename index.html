@@ -24496,29 +24496,32 @@ function renderHome() {
         </div>`;
 }
 
-function selectSoggetto(tipo) {
-    const app = document.getElementById('app-container');
-    const nav = document.getElementById('navigation-controls');
-    if(nav) nav.classList.remove('hidden');
-    
+// AGGIORNA I CAMPI QUANDO SCELGO UNA MACCHINA
 function aggiornaDatiMacchina(index) {
     const m = MACCHINE[index];
-    if (m.kw > 0) {
+    if (m && m.kw > 0) {
         document.getElementById('pmIII').value = m.kw;
         document.getElementById('scopIII').value = m.scop;
-    
+    }
+}
+
+// SCRIVE IL NOME E MOSTRA LA ZONA NELLA MASCHERA
 function setComune(nome, zona) {
     document.getElementById('inpComune').value = nome;
     document.getElementById('suggComuni').classList.add('hidden');
     
-    // Scrive la zona nel nuovo campo visibile
+    // Mostra "Zona X" nel campo arancione
     document.getElementById('mostraZona').value = "Zona " + zona;
     
-    // Salva le ore nel campo nascosto per il calcolo
+    // Salva il valore delle ore per il calcolo finale
     document.getElementById('zonaVal').value = ORE_ZONA[zona] || 0;
+}
+        function selectSoggetto(tipo) {
+    const app = document.getElementById('app-container');
+    const nav = document.getElementById('navigation-controls');
+    if(nav) nav.classList.remove('hidden');
 
-    // ... dentro selectSoggetto(tipo) ...
-app.innerHTML = `
+    app.innerHTML = `
     <div class="space-y-6">
         <h2 class="text-xl font-black border-b pb-4 uppercase italic">Intervento Pompe di Calore (${tipo})</h2>
         <div class="bg-gray-50 p-6 rounded-2xl border-2">
@@ -24554,11 +24557,15 @@ app.innerHTML = `
             </div>
             
             <input type="hidden" id="zonaVal" value="0">
-            <button onclick="calcolaFinale()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl uppercase shadow-lg">Calcola ora</button>
+            <button onclick="calcolaFinale()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl uppercase shadow-lg hover:bg-blue-700 transition-all">Calcola ora</button>
         </div>
-        </div>`;
-}
 
+        <div id="res-box" class="hidden p-8 bg-blue-900 text-white rounded-2xl text-center">
+            <p class="text-xs uppercase opacity-70">Incentivo Totale</p>
+            <h2 id="valErogabile" class="text-4xl font-black">€ 0,00</h2>
+        </div>
+    </div>`;
+}
 function filtraComuni(txt) {
     const box = document.getElementById('suggComuni');
     if(txt.length < 2) { box.classList.add('hidden'); return; }
@@ -24590,5 +24597,6 @@ function calcolaFinale() {
     </script>
 </body>
 </html>
+
 
 
