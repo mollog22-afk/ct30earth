@@ -24446,6 +24446,97 @@
   }
 ];
 
+        ]; // Chiude l'array DB_COMUNI
+
+        // ================================================================
+        // 2. SCRIPT DI PULIZIA (Sanitizzazione dati grezzi)
+        // ================================================================
+        const COMUNI_CLEAN = DB_COMUNI.map(item => {
+            // Prende il valore della stringa complicata
+            const riga = Object.values(item)[0];
+            if (!riga) return null;
+
+            // Divide la stringa usando il punto e virgola
+            const parti = riga.split(';');
+
+            // Se la riga ha i dati necessari e non è un'intestazione
+            if (parti.length >= 6 && parti[2] && parti[2].trim() !== "" && parti[2].trim() !== "Comune") {
+                return {
+                    c: parti[2].trim(), // Nome Comune
+                    p: parti[1].trim(), // Provincia
+                    z: parti[5].trim()  // Zona Climatica
+                };
+            }
+            return null;
+        }).filter(item => item !== null); // Rimuove i null (righe vuote o titoli)
+
+        // ================================================================
+        // 3. LOGICA DELL'APPLICAZIONE
+        // ================================================================
+
+        function renderHome() {
+            const container = document.getElementById('app-container');
+            container.innerHTML = `
+                <div class="max-w-md mx-auto mt-10 text-center">
+                    <h2 class="text-2xl font-black mb-6 text-gray-800">CALCOLATORE INCENTIVI</h2>
+                    <label class="block text-left text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Cerca il tuo Comune:</label>
+                    <div class="relative">
+                        <input type="text" id="comune-input" 
+                            class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition-all text-lg"
+                            placeholder="Es: Torino..."
+                            autocomplete="off"
+                            oninput="handleSearch(this.value)">
+                        <div id="suggestions" class="suggestions-box text-left"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleSearch(query) {
+            const box = document.getElementById('suggestions');
+            if (query.length < 2) {
+                box.style.display = 'none';
+                return;
+            }
+
+            // Cerca nei dati puliti (COMUNI_CLEAN)
+            const filtered = COMUNI_CLEAN.filter(item => 
+                item.c.toLowerCase().includes(query.toLowerCase())
+            ).slice(0, 10);
+
+            if (filtered.length > 0) {
+                box.innerHTML = filtered.map(item => `
+                    <div class="suggestion-item" onclick="selectComune('${item.c.replace(/'/g, "\\'")}', '${item.z}')">
+                        <span class="font-bold">${item.c}</span> (${item.p}) - <span class="text-blue-600 font-bold">Zona ${item.z}</span>
+                    </div>
+                `).join('');
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+            }
+        }
+
+        function selectComune(nome, zona) {
+            document.getElementById('comune-input').value = nome;
+            document.getElementById('suggestions').style.display = 'none';
+            
+            // Mostra un feedback per ora (qui poi aggiungeremo i calcoli)
+            const container = document.getElementById('app-container');
+            container.innerHTML += `
+                <div class="mt-8 p-6 bg-blue-50 rounded-xl border border-blue-100 animate-pulse">
+                    <p class="text-blue-800 font-bold">Hai selezionato: ${nome}</p>
+                    <p class="text-blue-600">Zona Climatica: <strong>${zona}</strong></p>
+                    <p class="text-xs mt-2 text-blue-400 italic">Dati pronti per il calcolo del Conto Termico.</p>
+                </div>
+            `;
+            document.getElementById('navigation-controls').classList.remove('hidden');
+        }
+
+        // Avvio dell'app
+        window.onload = renderHome;
+    </script>
+</body>
+</html>
         // --- INCOLLA QUI L'ELENCO DELLE POMPE DI CALORE ---
         // Formato suggerito: {t: "Tipo", m: "Modello", kw: 6, s: 4.5}
         const DB_PDC = [
@@ -24684,6 +24775,7 @@
     </body>
 </html>
     
+
 
 
 
