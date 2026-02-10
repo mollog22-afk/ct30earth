@@ -127,17 +127,21 @@ const app = document.getElementById('app-container');
         }
 
 function openCalculator(id, tipo, sottotipologia) {
-    if (id === 'III.A') renderIIIA(tipo, sottotipologia);
+    if (id === 'II.A') renderIIA(tipo, sottotipologia);
+    else if (id === 'II.B') renderIIB(tipo, sottotipologia);
+    else if (id === 'II.C') renderIIC(tipo, sottotipologia);
+    else if (id === 'II.D') renderIID(tipo, sottotipologia);
+    else if (id === 'II.E') renderIIE(tipo, sottotipologia);
+    else if (id === 'II.F') renderIIF(tipo, sottotipologia);
+    else if (id === 'II.G') renderIIG(tipo, sottotipologia);
+    else if (id === 'II.H') renderIIH(tipo, sottotipologia); // AGGIUNGI QUESTA
+    else if (id === 'III.A') renderIIIA(tipo, sottotipologia);
     else if (id === 'III.B') renderIIIB(tipo, sottotipologia);
     else if (id === 'III.C') renderIIIC(tipo, sottotipologia);
     else if (id === 'III.D') renderIIID(tipo, sottotipologia);
     else if (id === 'III.E') renderIIIE(tipo, sottotipologia);
     else if (id === 'III.F') renderIIIF(tipo, sottotipologia);
-    else if (id === 'III.G') renderIIIG(tipo, sottotipologia); // AGGIUNGI QUESTA RIGA
-    else if (id === 'II.A') renderIIA(tipo, sottotipologia);
-    else {
-        app.innerHTML = `<div class="p-16 text-center space-y-6"><div class="text-6xl">🛠️</div><h3 class="text-xl font-bold uppercase">Modulo ${id}</h3><p class="text-gray-400 italic font-bold">In fase di configurazione.</p></div>`;
-    }
+    else if (id === 'III.G') renderIIIG(tipo, sottotipologia);
 }
 
         // --- CALCOLATORE II.A (ISOLAMENTO) ---
@@ -394,6 +398,573 @@ function calcolaIIIC(sottotipologia) {
         Durata incentivo: <b>${anni} anni</b><br>
         Erogazione in: ${msgRata}.<br>
         Coefficiente Ci applicato: <b>${ci}</b>.
+    `;
+}
+    // --- MODULO II.B - INFISSI ---
+function renderIIB(tipo, sottotipologia) {
+    app.innerHTML = `
+        <div class="animate-fadeIn">
+            <div class="flex justify-between items-center border-b pb-4 mb-6">
+                <button onclick="renderHome()" class="text-blue-600 text-sm font-bold">← Home</button>
+                <h2 class="text-2xl font-bold text-blue-800">Calcolo II.B - Infissi</h2>
+                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">${sottotipologia}</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="space-y-4 bg-gray-50 p-6 rounded-2xl shadow-inner">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Spesa Totale Stimata (€)</label>
+                        <input type="number" id="spesaIIB" class="w-full p-3 border rounded-xl" placeholder="Es: 150000">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Superficie Totale (mq)</label>
+                        <input type="number" id="mqIIB" class="w-full p-3 border-2 border-blue-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Es: 200">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Zona Climatica</label>
+                        <select id="zonaIIB" class="w-full p-3 border rounded-xl">
+                            <option value="ABC">Zone A, B, C (Es: Mazara)</option>
+                            <option value="DEF">Zone D, E, F (Es: Nord Italia)</option>
+                        </select>
+                    </div>
+
+                    <div class="p-4 bg-orange-50 rounded-xl border border-orange-100">
+                        <p class="text-[10px] text-orange-800 leading-relaxed font-bold">REQUISITO OBBLIGATORIO:</p>
+                        <p class="text-[9px] text-orange-700 uppercase font-medium">
+                            Installazione di valvole termostatiche (o sistemi modulanti) su tutti i radiatori esistenti.
+                        </p>
+                    </div>
+
+                    <button onclick="calcolaIIB('${sottotipologia}')" class="w-full bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg hover:bg-blue-800 uppercase transition-all">CALCOLA INCENTIVO II.B</button>
+                </div>
+
+                <div id="res-box-IIB" class="hidden p-8 bg-white border-2 border-blue-600 rounded-2xl shadow-xl flex flex-col justify-center">
+                    <p class="text-[10px] font-black text-gray-400 uppercase mb-2 text-center">Massimale Zona Applicato</p>
+                    <p id="infoMassimaleIIB" class="text-xl font-bold text-gray-500 mb-6 text-center border-b pb-4 border-gray-100">€ 0,00/mq</p>
+                    
+                    <p class="text-sm font-black text-blue-800 uppercase mb-2 text-center">Incentivo Erogabile Finale</p>
+                    <p id="valErogabileIIB" class="text-5xl font-black text-green-600 mb-6 text-center">€ 0,00</p>
+                    
+                    <div id="info-rate-IIB" class="p-4 bg-green-50 rounded-lg text-[11px] text-green-800 font-medium border-l-4 border-green-500"></div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function calcolaIIB(sottotipologia) {
+    const spesa = parseFloat(document.getElementById('spesaIIB').value) || 0;
+    const mq = parseFloat(document.getElementById('mqIIB').value) || 0;
+    const zona = document.getElementById('zonaIIB').value;
+
+    if (spesa <= 0 || mq <= 0) { alert("Inserire spesa e superficie!"); return; }
+
+    // 1. Definizione Massimale per Zona
+    const massimaleUnitario = (zona === 'ABC') ? 700 : 800;
+    const spesaMassimaAmmissibile = mq * massimaleUnitario;
+
+    // 2. Base di calcolo: la minore tra spesa reale e tetto mq
+    const baseCalcolo = Math.min(spesa, spesaMassimaAmmissibile);
+
+    // 3. Percentuale (100% per Scuole/Ospedali, 40% standard)
+    let percentuale = 0.40;
+    const soggetti100 = ["Scuole", "Strutture Sanitarie", "Istituti Penitenziari"];
+    if (soggetti100.includes(sottotipologia)) {
+        percentuale = 1.0;
+    }
+
+    // 4. Calcolo Finale
+    const erogabile = baseCalcolo * percentuale;
+    const anni = erogabile <= 15000 ? 1 : 5;
+
+    // 5. Visualizzazione
+    document.getElementById('res-box-IIB').classList.remove('hidden');
+    document.getElementById('infoMassimaleIIB').innerText = `Massimale ${zona}: € ${massimaleUnitario}/mq`;
+    document.getElementById('valErogabileIIB').innerText = "€ " + erogabile.toLocaleString('it-IT', {minimumFractionDigits: 2});
+
+    const infoContainer = document.getElementById('info-rate-IIB');
+    if (erogabile <= 15000) {
+        infoContainer.innerHTML = `✅ Aliquota: <b>${percentuale*100}%</b>. Erogazione in <b>rata unica</b>.`;
+    } else {
+        infoContainer.innerHTML = `📅 Aliquota: <b>${percentuale*100}%</b>. Erogazione in <b>5 rate annuali</b> da € ${(erogabile/5).toLocaleString('it-IT', {minimumFractionDigits:2})}.`;
+    }
+}
+    // --- MODULO II.C - SCHERMATURE SOLARI ---
+function renderIIC(tipo, sottotipologia) {
+    app.innerHTML = `
+        <div class="animate-fadeIn">
+            <div class="flex justify-between items-center border-b pb-4 mb-6">
+                <button onclick="renderHome()" class="text-blue-600 text-sm font-bold">← Home</button>
+                <h2 class="text-2xl font-bold text-blue-800">Calcolo II.C - Schermature Solari</h2>
+                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">${sottotipologia}</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="space-y-4 bg-gray-50 p-6 rounded-2xl shadow-inner">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Spesa Totale Stimata (€)</label>
+                        <input type="number" id="spesaIIC" class="w-full p-3 border rounded-xl" placeholder="Es: 28000">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Tipologia Schermatura</label>
+                        <select id="tipoSchermo" class="w-full p-3 border-2 border-blue-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="250">Sistemi di schermatura (Fissi/Mobili)</option>
+                            <option value="130">Pellicole Solari (Non riflettenti)</option>
+                            <option value="80">Pellicole Solari (Riflettenti)</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center space-x-3 p-3 bg-white border rounded-xl">
+                        <input type="checkbox" id="automazioneIIC" class="w-5 h-5 accent-blue-600">
+                        <label for="automazioneIIC" class="text-sm font-bold text-gray-700 uppercase">Includi Automazione (+50€/mq)</label>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Superficie Utile (mq)</label>
+                        <input type="number" id="mqIIC" class="w-full p-3 border-2 border-blue-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Es: 100">
+                    </div>
+
+                    <div class="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                        <p class="text-[9px] text-blue-800 leading-relaxed font-bold uppercase">Nota Tecnica:</p>
+                        <p class="text-[9px] text-blue-700 leading-relaxed uppercase">
+                            Solo esposizioni da Est a Ovest (Sud incluso). Nord escluso. 
+                            Gtot (classe) ≥ 3 obbligatorio.
+                        </p>
+                    </div>
+
+                    <button onclick="calcolaIIC('${sottotipologia}')" class="w-full bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg hover:bg-blue-800 uppercase transition-all">CALCOLA INCENTIVO II.C</button>
+                </div>
+
+                <div id="res-box-IIC" class="hidden p-8 bg-white border-2 border-blue-600 rounded-2xl shadow-xl flex flex-col justify-center">
+                    <p class="text-[10px] font-black text-gray-400 uppercase mb-2 text-center">Massimale Cumulato Applicato</p>
+                    <p id="infoMassimaleIIC" class="text-xl font-bold text-gray-500 mb-6 text-center border-b pb-4 border-gray-100">€ 0,00/mq</p>
+                    
+                    <p class="text-sm font-black text-blue-800 uppercase mb-2 text-center">Incentivo Erogabile Finale</p>
+                    <p id="valErogabileIIC" class="text-5xl font-black text-green-600 mb-6 text-center">€ 0,00</p>
+                    
+                    <div id="info-rate-IIC" class="p-4 bg-green-50 rounded-lg text-[11px] text-green-800 font-medium border-l-4 border-green-500"></div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function calcolaIIC(sottotipologia) {
+    const spesa = parseFloat(document.getElementById('spesaIIC').value) || 0;
+    const mq = parseFloat(document.getElementById('mqIIC').value) || 0;
+    const baseK = parseFloat(document.getElementById('tipoSchermo').value);
+    const hasAuto = document.getElementById('automazioneIIC').checked;
+
+    if (spesa <= 0 || mq <= 0) { alert("Inserire spesa e superficie!"); return; }
+
+    // 1. Calcolo Massimale Combinato
+    const massimaleUnitario = hasAuto ? (baseK + 50) : baseK;
+    const spesaMassimaAmmissibile = mq * massimaleUnitario;
+
+    // 2. Base di calcolo (minore tra reale e tetto)
+    const baseCalcolo = Math.min(spesa, spesaMassimaAmmissibile);
+
+    // 3. Percentuale (100% per Scuole/Ospedali PA, 40% standard)
+    let percentuale = 0.40;
+    const soggetti100 = ["Scuole", "Strutture Sanitarie", "Istituti Penitenziari", "PA Standard sotto i 15.000 abitanti"];
+    if (soggetti100.includes(sottotipologia)) {
+        percentuale = 1.0;
+    }
+
+    // 4. Calcolo Finale
+    const erogabile = baseCalcolo * percentuale;
+    const anni = erogabile <= 15000 ? 1 : 5;
+
+    // 5. Visualizzazione
+    document.getElementById('res-box-IIC').classList.remove('hidden');
+    document.getElementById('infoMassimaleIIC').innerText = `Massimale calcolato: € ${massimaleUnitario}/mq`;
+    document.getElementById('valErogabileIIC').innerText = "€ " + erogabile.toLocaleString('it-IT', {minimumFractionDigits: 2});
+
+    const infoContainer = document.getElementById('info-rate-IIC');
+    const msgRata = (erogabile <= 15000) ? "Rata Unica" : "5 Rate Annuali";
+    
+    infoContainer.innerHTML = `
+        Aliquota: <b>${percentuale*100}%</b><br>
+        Spesa ammissibile: € ${baseCalcolo.toLocaleString()}<br>
+        Erogazione in: <b>${msgRata}</b>.
+    `;
+}
+    // --- MODULO II.D - EDIFICI nZEB ---
+function renderIID(tipo, sottotipologia) {
+    app.innerHTML = `
+        <div class="animate-fadeIn">
+            <div class="flex justify-between items-center border-b pb-4 mb-6">
+                <button onclick="renderHome()" class="text-blue-600 text-sm font-bold">← Home</button>
+                <h2 class="text-2xl font-bold text-blue-800">Calcolo II.D - Trasformazione nZEB</h2>
+                <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">${sottotipologia}</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="space-y-4 bg-gray-50 p-6 rounded-2xl shadow-inner">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Spesa Totale Intervento (€)</label>
+                        <input type="number" id="spesaIID" class="w-full p-3 border rounded-xl" placeholder="Es: 1800000">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Superficie Utile Calpestabile (mq)</label>
+                        <input type="number" id="mqIID" class="w-full p-3 border-2 border-blue-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Es: 2000">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Zona Climatica</label>
+                        <select id="zonaIID" class="w-full p-3 border rounded-xl">
+                            <option value="ABC">Zone A, B, C (Es: Mazara del Vallo)</option>
+                            <option value="DEF">Zone D, E, F (Es: Nord Italia)</option>
+                        </select>
+                    </div>
+
+                    <div class="p-4 bg-purple-50 rounded-xl border border-purple-100">
+                        <p class="text-[9px] text-purple-800 leading-relaxed font-bold uppercase">Vantaggio PPP:</p>
+                        <p class="text-[9px] text-purple-700 leading-relaxed uppercase font-medium">
+                            Intervento omnicomprensivo (Involucro + Impianti + Rinnovabili). 
+                            Aliquota al 100% per Scuole Pubbliche.
+                        </p>
+                    </div>
+
+                    <button onclick="calcolaIID('${sottotipologia}')" class="w-full bg-purple-700 text-white font-black py-4 rounded-xl shadow-lg hover:bg-purple-800 uppercase transition-all">CALCOLA INCENTIVO II.D</button>
+                </div>
+
+                <div id="res-box-IID" class="hidden p-8 bg-white border-2 border-purple-600 rounded-2xl shadow-xl flex flex-col justify-center text-center">
+                    <p class="text-[10px] font-black text-gray-400 uppercase mb-2">Massimale Unitario Applicato</p>
+                    <p id="infoMassimaleIID" class="text-xl font-bold text-gray-500 mb-4 border-b pb-4 border-gray-100">€ 0,00/mq</p>
+                    
+                    <p class="text-sm font-black text-purple-800 uppercase mb-2">Incentivo Totale Estimato</p>
+                    <p id="valErogabileIID" class="text-5xl font-black text-green-600 mb-6">€ 0,00</p>
+                    
+                    <div id="info-rate-IID" class="p-4 bg-green-50 rounded-lg text-[11px] text-green-800 font-medium border-l-4 border-green-500 text-left"></div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function calcolaIID(sottotipologia) {
+    const spesa = parseFloat(document.getElementById('spesaIID').value) || 0;
+    const mq = parseFloat(document.getElementById('mqIID').value) || 0;
+    const zona = document.getElementById('zonaIID').value;
+
+    if (spesa <= 0 || mq <= 0) { alert("Inserire spesa e superficie!"); return; }
+
+    // 1. Configurazione Massimali (Tabella 19)
+    let massimaleUnitario = 0;
+    let massimaleTotaleProgetto = 0;
+
+    if (zona === 'ABC') {
+        massimaleUnitario = 1000;
+        massimaleTotaleProgetto = 2500000;
+    } else {
+        massimaleUnitario = 1300;
+        massimaleTotaleProgetto = 3000000;
+    }
+
+    // 2. Calcolo base ammissibile
+    const spesaMassimaSuperficie = mq * massimaleUnitario;
+    const baseCalcolo = Math.min(spesa, spesaMassimaSuperficie);
+
+    // 3. Percentuale (100% per Scuole PA / Art. 48-ter)
+    let percentuale = 0.65; // Standard nZEB
+    const soggetti100 = ["Scuole", "Strutture Sanitarie", "Istituti Penitenziari"];
+    if (soggetti100.includes(sottotipologia)) {
+        percentuale = 1.0;
+    }
+
+    // 4. Calcolo Finale con cap assoluto
+    let erogabile = baseCalcolo * percentuale;
+    if (erogabile > massimaleTotaleProgetto) {
+        erogabile = massimaleTotaleProgetto;
+    }
+
+    // 5. Output
+    document.getElementById('res-box-IID').classList.remove('hidden');
+    document.getElementById('infoMassimaleIID').innerText = `Zona ${zona}: € ${massimaleUnitario}/mq (Max: € ${massimaleTotaleProgetto.toLocaleString()})`;
+    document.getElementById('valErogabileIID').innerText = "€ " + erogabile.toLocaleString('it-IT', {minimumFractionDigits: 2});
+
+    const infoContainer = document.getElementById('info-rate-IID');
+    const quotaAnnuale = erogabile / 5;
+    
+    infoContainer.innerHTML = `
+        Aliquota: <b>${percentuale*100}%</b><br>
+        Spesa ammissibile: € ${baseCalcolo.toLocaleString()}<br>
+        Erogazione: <b>5 rate annuali</b> da € ${quotaAnnuale.toLocaleString('it-IT', {minimumFractionDigits:2})}.<br>
+        <span class="text-[9px] mt-2 block text-purple-900 font-black">N.B. Necessaria prenotazione per acconto.</span>
+    `;
+}
+    // --- MODULO II.E - ILLUMINAZIONE ---
+function renderIIE(tipo, sottotipologia) {
+    app.innerHTML = `
+        <div class="animate-fadeIn">
+            <div class="flex justify-between items-center border-b pb-4 mb-6">
+                <button onclick="renderHome()" class="text-blue-600 text-sm font-bold">← Home</button>
+                <h2 class="text-2xl font-bold text-blue-800">Calcolo II.E - Illuminazione LED</h2>
+                <span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">${sottotipologia}</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="space-y-4 bg-gray-50 p-6 rounded-2xl shadow-inner">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Spesa Totale Stimata (€)</label>
+                        <input type="number" id="spesaIIE" class="w-full p-3 border rounded-xl" placeholder="Es: 30000">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Tecnologia Utilizzata</label>
+                        <select id="tipoLuce" class="w-full p-3 border-2 border-blue-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="35">Sistemi a LED (Max 35€/mq)</option>
+                            <option value="15">Altre lampade efficienti (Max 15€/mq)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Superficie Utile Calpestabile (mq)</label>
+                        <input type="number" id="mqIIE" class="w-full p-3 border-2 border-blue-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Es: 1000">
+                    </div>
+
+                    <div class="p-4 bg-yellow-50 rounded-xl border border-yellow-100">
+                        <p class="text-[9px] text-yellow-800 leading-relaxed font-bold uppercase">Vincolo di Potenza:</p>
+                        <p class="text-[9px] text-yellow-700 leading-relaxed uppercase">
+                            La nuova potenza installata deve essere ≤ 50% di quella sostituita per accedere pienamente all'incentivo.
+                        </p>
+                    </div>
+
+                    <button onclick="calcolaIIE('${sottotipologia}')" class="w-full bg-yellow-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-yellow-700 uppercase transition-all">CALCOLA INCENTIVO II.E</button>
+                </div>
+
+                <div id="res-box-IIE" class="hidden p-8 bg-white border-2 border-yellow-500 rounded-2xl shadow-xl flex flex-col justify-center text-center">
+                    <p class="text-[10px] font-black text-gray-400 uppercase mb-2">Costo Massimo Riconosciuto</p>
+                    <p id="infoMassimaleIIE" class="text-xl font-bold text-gray-500 mb-4 border-b pb-4 border-gray-100">€ 0,00/mq</p>
+                    
+                    <p class="text-sm font-black text-yellow-800 uppercase mb-2">Incentivo Totale Calcolato</p>
+                    <p id="valErogabileIIE" class="text-5xl font-black text-green-600 mb-6">€ 0,00</p>
+                    
+                    <div id="info-rate-IIE" class="p-4 bg-green-50 rounded-lg text-[11px] text-green-800 font-medium border-l-4 border-green-500 text-left"></div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function calcolaIIE(sottotipologia) {
+    const spesa = parseFloat(document.getElementById('spesaIIE').value) || 0;
+    const mq = parseFloat(document.getElementById('mqIIE').value) || 0;
+    const massimaleUnitario = parseFloat(document.getElementById('tipoLuce').value);
+
+    if (spesa <= 0 || mq <= 0) { alert("Inserire spesa e superficie!"); return; }
+
+    // 1. Tetto massimo basato sulla superficie
+    const spesaMassimaAmmissibile = mq * massimaleUnitario;
+    
+    // 2. Tetto massimo assoluto (140k per LED, 50k per altro)
+    const capAssoluto = (massimaleUnitario === 35) ? 140000 : 50000;
+
+    // 3. Base di calcolo (il minore tra spesa reale e tetto mq)
+    const baseCalcolo = Math.min(spesa, spesaMassimaAmmissibile);
+
+    // 4. Percentuale (100% per Scuole/Ospedali/PA)
+    let percentuale = 0.40;
+    const soggetti100 = ["Scuole", "Strutture Sanitarie", "Istituti Penitenziari"];
+    if (soggetti100.includes(sottotipologia)) {
+        percentuale = 1.0;
+    }
+
+    // 5. Calcolo Finale
+    let erogabile = baseCalcolo * percentuale;
+    if (erogabile > capAssoluto) erogabile = capAssoluto;
+
+    // 6. Output
+    document.getElementById('res-box-IIE').classList.remove('hidden');
+    document.getElementById('infoMassimaleIIE').innerText = `Massimale: € ${massimaleUnitario}/mq (Cap: € ${capAssoluto.toLocaleString()})`;
+    document.getElementById('valErogabileIIE').innerText = "€ " + erogabile.toLocaleString('it-IT', {minimumFractionDigits: 2});
+
+    const infoContainer = document.getElementById('info-rate-IIE');
+    const msgRata = (erogabile <= 15000) ? "Rata Unica" : "5 Rate Annuali";
+    
+    infoContainer.innerHTML = `
+        Aliquota: <b>${percentuale*100}%</b><br>
+        Spesa ammissibile: € ${baseCalcolo.toLocaleString()}<br>
+        Erogazione: <b>${msgRata}</b>.
+    `;
+}
+    // --- MODULO II.F - BUILDING AUTOMATION ---
+function renderIIF(tipo, sottotipologia) {
+    app.innerHTML = `
+        <div class="animate-fadeIn">
+            <div class="flex justify-between items-center border-b pb-4 mb-6">
+                <button onclick="renderHome()" class="text-blue-600 text-sm font-bold">← Home</button>
+                <h2 class="text-2xl font-bold text-blue-800">Calcolo II.F - Building Automation</h2>
+                <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">${sottotipologia}</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="space-y-4 bg-gray-50 p-6 rounded-2xl shadow-inner">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Spesa Totale Stimata (€)</label>
+                        <input type="number" id="spesaIIF" class="w-full p-3 border rounded-xl" placeholder="Es: 75000">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Superficie Utile Calpestabile (mq)</label>
+                        <input type="number" id="mqIIF" class="w-full p-3 border-2 border-blue-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Es: 1500">
+                    </div>
+
+                    <div class="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                        <p class="text-[9px] text-indigo-800 leading-relaxed font-bold uppercase">Requisito Minimo:</p>
+                        <p class="text-[9px] text-indigo-700 leading-relaxed uppercase font-medium">
+                            Classe B (UNI EN ISO 52120-1). Deve gestire riscaldamento, luci e schermature solari.
+                        </p>
+                    </div>
+
+                    <button onclick="calcolaIIF('${sottotipologia}')" class="w-full bg-indigo-700 text-white font-black py-4 rounded-xl shadow-lg hover:bg-indigo-800 uppercase transition-all">CALCOLA INCENTIVO II.F</button>
+                </div>
+
+                <div id="res-box-IIF" class="hidden p-8 bg-white border-2 border-indigo-600 rounded-2xl shadow-xl flex flex-col justify-center text-center">
+                    <p class="text-[10px] font-black text-gray-400 uppercase mb-2">Massimale Costo Unitario</p>
+                    <p class="text-xl font-bold text-gray-500 mb-4 border-b pb-4 border-gray-100">€ 60,00/mq</p>
+                    
+                    <p class="text-sm font-black text-indigo-800 uppercase mb-2">Incentivo Finale Erogabile</p>
+                    <p id="valErogabileIIF" class="text-5xl font-black text-green-600 mb-6">€ 0,00</p>
+                    
+                    <div id="info-rate-IIF" class="p-4 bg-green-50 rounded-lg text-[11px] text-green-800 font-medium border-l-4 border-green-500 text-left"></div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function calcolaIIF(sottotipologia) {
+    const spesa = parseFloat(document.getElementById('spesaIIF').value) || 0;
+    const mq = parseFloat(document.getElementById('mqIIF').value) || 0;
+
+    if (spesa <= 0 || mq <= 0) { alert("Inserire spesa e superficie!"); return; }
+
+    // 1. Parametri Tabella 21
+    const massimaleUnitario = 60; // €/mq
+    const capAssoluto = 100000; // €
+
+    // 2. Base di calcolo (il minore tra spesa reale e tetto mq)
+    const spesaMassimaSuperficie = mq * massimaleUnitario;
+    const baseCalcolo = Math.min(spesa, spesaMassimaSuperficie);
+
+    // 3. Percentuale (100% per Scuole/Ospedali/PA - Art. 48-ter)
+    let percentuale = 0.40;
+    const soggetti100 = ["Scuole", "Strutture Sanitarie", "Istituti Penitenziari", "PA Standard sotto i 15.000 abitanti"];
+    if (soggetti100.includes(sottotipologia)) {
+        percentuale = 1.0;
+    }
+
+    // 4. Calcolo Finale con cap assoluto di 100.000€
+    let erogabile = baseCalcolo * percentuale;
+    if (erogabile > capAssoluto) erogabile = capAssoluto;
+
+    // 5. Output
+    document.getElementById('res-box-IIF').classList.remove('hidden');
+    document.getElementById('valErogabileIIF').innerText = "€ " + erogabile.toLocaleString('it-IT', {minimumFractionDigits: 2});
+
+    const infoContainer = document.getElementById('info-rate-IIF');
+    const msgRata = (erogabile <= 15000) ? "Rata Unica" : "5 Rate Annuali";
+    
+    infoContainer.innerHTML = `
+        Aliquota: <b>${percentuale*100}%</b><br>
+        Spesa ammissibile: € ${baseCalcolo.toLocaleString()}<br>
+        Erogazione: <b>${msgRata}</b>.<br>
+        <span class="text-[9px] mt-2 block uppercase font-bold text-indigo-900">N.B. Il sistema deve garantire il monitoraggio dei consumi per il PPP.</span>
+    `;
+}
+    // --- MODULO II.H - FOTOVOLTAICO TRAINATO ---
+function renderIIH(tipo, sottotipologia) {
+    app.innerHTML = `
+        <div class="animate-fadeIn">
+            <div class="flex justify-between items-center border-b pb-4 mb-6">
+                <button onclick="renderHome()" class="text-blue-600 text-sm font-bold">← Home</button>
+                <h2 class="text-2xl font-bold text-blue-800">Calcolo II.H - Fotovoltaico</h2>
+                <span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">Intervento Trainato</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="space-y-4 bg-gray-50 p-6 rounded-2xl shadow-inner border-2 border-amber-100">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Potenza FV (kWp)</label>
+                            <input type="number" id="pneIIH" class="w-full p-3 border rounded-xl" placeholder="Es: 20">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Accumulo (kWh)</label>
+                            <input type="number" id="kwhIIH" class="w-full p-3 border rounded-xl" placeholder="Es: 20">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-amber-800 mb-1 uppercase">Registro Tecnologie (Bonus UE)</label>
+                        <select id="bonusUE" class="w-full p-3 border-2 border-amber-200 rounded-xl bg-white focus:ring-2 focus:ring-amber-500 outline-none">
+                            <option value="0.20">Aliquota Standard (20%)</option>
+                            <option value="0.25">Moduli UE Requisiti Base (25%)</option>
+                            <option value="0.30">Moduli UE Requisiti Superiori (30%)</option>
+                            <option value="0.35">Moduli UE Eccellenza (35%)</option>
+                        </select>
+                    </div>
+
+                    <div class="pt-4 border-t border-dashed border-amber-200">
+                        <label class="block text-xs font-bold text-red-600 mb-1 uppercase italic">Incentivo Trainante (III.A PdC) €</label>
+                        <input type="number" id="trainanteIIIA" class="w-full p-3 border-2 border-red-100 rounded-xl bg-red-50" placeholder="Valore calcolato in III.A">
+                        <p class="text-[9px] text-red-500 mt-1 font-bold uppercase tracking-tighter">
+                            * Tetto massimo: l'incentivo FV non può superare quello della Pompa di Calore.
+                        </p>
+                    </div>
+
+                    <button onclick="calcolaIIH()" class="w-full bg-amber-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-amber-700 uppercase transition-all">CALCOLA INCENTIVO II.H</button>
+                </div>
+
+                <div id="res-box-IIH" class="hidden p-8 bg-white border-2 border-amber-600 rounded-2xl shadow-xl flex flex-col justify-center text-center">
+                    <p class="text-[10px] font-black text-gray-400 uppercase mb-2">Spesa Massima Ammissibile</p>
+                    <p id="infoSpesaIIH" class="text-xl font-bold text-gray-500 mb-4 border-b pb-4 border-gray-100">€ 0,00</p>
+                    
+                    <p class="text-sm font-black text-amber-800 uppercase mb-2">Incentivo Erogabile Fotovoltaico</p>
+                    <p id="valErogabileIIH" class="text-5xl font-black text-green-600 mb-6">€ 0,00</p>
+                    
+                    <div id="info-rate-IIH" class="p-4 bg-amber-50 rounded-lg text-[11px] text-amber-800 font-medium border-l-4 border-amber-500 text-left"></div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function calcolaIIH() {
+    const kwp = parseFloat(document.getElementById('pneIIH').value) || 0;
+    const kwh = parseFloat(document.getElementById('kwhIIH').value) || 0;
+    const trainante = parseFloat(document.getElementById('trainanteIIIA').value) || 0;
+    const aliquota = parseFloat(document.getElementById('bonusUE').value);
+
+    if (kwp <= 0 || trainante <= 0) { 
+        alert("Inserire potenza fotovoltaica e incentivo trainante III.A!"); 
+        return; 
+    }
+
+    // 1. Calcolo Costo Unitario FV a scaglioni
+    let cFTV = 0;
+    if (kwp <= 20) cFTV = 1500;
+    else if (kwp <= 200) cFTV = 1200;
+    else if (kwp <= 600) cFTV = 1100;
+    else cFTV = 1050;
+
+    // 2. Calcolo Spesa Massima (FV + Accumulo)
+    const spesaFV = kwp * cFTV;
+    const spesaAcc = kwh * 1000;
+    const spesaTotale = spesaFV + spesaAcc;
+
+    // 3. Calcolo Incentivo Teorico
+    const incentivoTeorico = spesaTotale * aliquota;
+
+    // 4. Verifica Tetto Trainante
+    const erogabile = Math.min(incentivoTeorico, trainante);
+
+    // 5. Output
+    document.getElementById('res-box-IIH').classList.remove('hidden');
+    document.getElementById('infoSpesaIIH').innerText = `Spesa Ammissibile: € ${spesaTotale.toLocaleString()}`;
+    document.getElementById('valErogabileIIH').innerText = "€ " + erogabile.toLocaleString('it-IT', {minimumFractionDigits: 2});
+
+    const infoContainer = document.getElementById('info-rate-IIH');
+    infoContainer.innerHTML = `
+        Aliquota applicata: <b>${aliquota * 100}%</b><br>
+        Tetto PdC (III.A): € ${trainante.toLocaleString()}<br>
+        <span class="text-[9px] mt-2 block uppercase font-bold text-amber-900 italic">
+            L'intervento è incentivato solo se abbinato ad autoconsumo.
+        </span>
     `;
 }
 // --- INIZIO MODULO III.B ---
@@ -846,6 +1417,7 @@ function calcolaIIIG(sottotipologia) {
     </style>
 </body>
 </html>
+
 
 
 
