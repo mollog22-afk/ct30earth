@@ -191,10 +191,7 @@ function openCalculator(id, tipo, sottotipologia) {
                             <div id="warnIIA" class="mt-6 text-[11px] text-orange-700 italic font-bold bg-orange-50 p-4 rounded-lg hidden"></div>
                         </div>
                     </div>
-                    <button onclick="window.print()" class="mt-6 w-full bg-gray-100 text-gray-800 font-bold py-2 rounded-lg border border-gray-300 hover:bg-gray-200 transition no-print flex items-center justify-center gap-2">
-    <span>🖨️</span> Scarica Report PDF
-</button>
-                </div>`;
+                     </div>`;
         }
 
         function calcolaIIA(sottotipologia) {
@@ -273,6 +270,19 @@ function openCalculator(id, tipo, sottotipologia) {
                     </div>
                 </div>`;
         }
+    const datiIIA = {
+    soggetto: sottotipologia,
+    spesa: spesa,
+    tecnici: `Superficie Totale: ${mqCop + mqPav + mqPar} mq`,
+    zona: zona === "EF" ? "Zona E/F" : "Zona A/B/C/D",
+    incentivo: finale
+};
+
+document.getElementById('resIIA').innerHTML += `
+    <button onclick='generaReportDati("II.A", ${JSON.stringify(datiIIA)})' 
+            class="mt-6 w-full bg-blue-100 text-blue-800 font-bold py-2 rounded-lg border border-blue-200 hover:bg-blue-200 transition no-print">
+        📄 Genera Scheda per PDF
+    </button>`;
 
         function calcolaIIIA(sottotipologia) {
             const spesa = parseFloat(document.getElementById('spesaIII').value) || 0;
@@ -1437,6 +1447,7 @@ function calcolaIIIG(sottotipologia) {
     </style>
 </body>
 </html>
+
 
 
 
