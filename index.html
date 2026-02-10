@@ -267,8 +267,96 @@ const app = document.getElementById('app-container');
                 info.innerHTML = `📅 Importo > 15.000€: erogazione in <b>${anni} rate</b> annuali costanti da € ${(erogabile/anni).toLocaleString('it-IT', {minimumFractionDigits:2})}.`;
             }
         }
-
         renderHome();
+    // ... qui finisce la tua funzione calcolaIIIA ...
+
+// --- INIZIO MODULO III.B ---
+function renderIIIB(tipo, sottotipologia) {
+    app.innerHTML = `
+        <div class="animate-fadeIn">
+            <div class="flex justify-between items-center border-b pb-4 mb-6">
+                <button onclick="renderHome()" class="text-blue-600 text-sm font-bold">← Home</button>
+                <h2 class="text-2xl font-bold text-blue-800">Calcolo III.B - Sistemi Ibridi</h2>
+                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">${sottotipologia}</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="space-y-4 bg-gray-50 p-6 rounded-2xl shadow-inner">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Spesa Stimata (€)</label>
+                        <input type="number" id="spesaIIIB" class="w-full p-3 border rounded-xl" placeholder="Es: 15000">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Tipologia Costruttiva (Fattore k)</label>
+                        <select id="fattoreK" class="w-full p-3 border-2 border-blue-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="1.25">Sistemi Factory Made (k=1,25)</option>
+                            <option value="1.00">Bivalenti o Add-on ≤ 35 kW (k=1,00)</option>
+                            <option value="1.10">Bivalenti o Add-on > 35 kW (k=1,10)</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Potenza Pm (kW)</label>
+                            <input type="number" id="pmIIIB" class="w-full p-3 border rounded-xl" placeholder="Es: 12">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">SCOP</label>
+                            <input type="number" id="scopIIIB" class="w-full p-3 border rounded-xl" placeholder="Es: 4.1">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Zona Climatica</label>
+                        <select id="zonaIIIB" class="w-full p-3 border rounded-xl">
+                            <option value="600">Zona A</option><option value="850">Zona B</option>
+                            <option value="1100">Zona C</option><option value="1400">Zona D</option>
+                            <option value="1700">Zona E</option><option value="1800">Zona F</option>
+                        </select>
+                    </div>
+
+                    <button onclick="calcolaIIIB('${sottotipologia}')" class="w-full bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg hover:bg-blue-800 uppercase transition-all">CALCOLA INCENTIVO III.B</button>
+                </div>
+
+                <div id="res-box-IIIB" class="hidden p-8 bg-white border-2 border-blue-600 rounded-2xl shadow-xl flex flex-col justify-center">
+                    <p class="text-[10px] font-black text-gray-400 uppercase mb-2">Incentivo Lordo (con k)</p>
+                    <p id="valLordoIIIB" class="text-2xl font-bold text-gray-500 mb-6 border-b pb-4 border-gray-100">€ 0,00</p>
+                    <p class="text-sm font-black text-blue-800 uppercase mb-2">Incentivo Erogabile</p>
+                    <p id="valErogabileIIIB" class="text-5xl font-black text-green-600 mb-6">€ 0,00</p>
+                    <div id="info-rate-IIIB" class="p-4 bg-green-50 rounded-lg text-[11px] text-green-800 font-medium border-l-4 border-green-500"></div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function calcolaIIIB(sottotipologia) {
+    const spesa = parseFloat(document.getElementById('spesaIIIB').value) || 0;
+    const pm = parseFloat(document.getElementById('pmIIIB').value) || 0;
+    const quf = parseFloat(document.getElementById('zonaIIIB').value) || 0;
+    const scop = parseFloat(document.getElementById('scopIIIB').value) || 0;
+    const k = parseFloat(document.getElementById('fattoreK').value) || 1;
+
+    const ci = 0.150; 
+    const scopMin = 2.825;
+    if (spesa <= 0 || pm <= 0 || scop <= 0) { alert("Dati incompleti!"); return; }
+
+    const anni = pm <= 35 ? 2 : 5;
+    const kp = scop / scopMin;
+    const lordo = ci * pm * quf * (1 - (1 / scop)) * kp * k * anni;
+
+    const soggetti100 = ["Scuole", "Istituti Penitenziari", "Strutture Sanitarie", "PA Standard sotto i 15.000 abitanti"];
+    let erogabile = soggetti100.includes(sottotipologia) ? lordo : Math.min(lordo, spesa * 0.65);
+
+    document.getElementById('res-box-IIIB').classList.remove('hidden');
+    document.getElementById('valLordoIIIB').innerText = "€ " + lordo.toLocaleString('it-IT', {minimumFractionDigits: 2});
+    document.getElementById('valErogabileIIIB').innerText = "€ " + erogabile.toLocaleString('it-IT', {minimumFractionDigits: 2});
+
+    const info = document.getElementById('info-rate-IIIB');
+    info.innerHTML = erogabile <= 15000 
+        ? `✅ Rata unica. Fattore k applicato: <b>${k}</b>.` 
+        : `📅 <b>${anni} rate</b> annuali da € ${(erogabile/anni).toLocaleString('it-IT')}. Fattore k: <b>${k}</b>.`;
+}
+// --- FINE MODULO III.B ---
     </script>
     <style>
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -276,5 +364,6 @@ const app = document.getElementById('app-container');
     </style>
 </body>
 </html>
+
 
 
