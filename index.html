@@ -391,7 +391,11 @@ function calcolaIIIC(sottotipologia) {
     
     info.innerHTML = `
         Tecnologia: <b>${tipoGen.replace('_', ' ')}</b><br>
-        Durata incentivo: <b>${anni} anni
+        Durata incentivo: <b>${anni} anni</b><br>
+        Erogazione in: ${msgRata}.<br>
+        Coefficiente Ci applicato: <b>${ci}</b>.
+    `;
+}
 // --- INIZIO MODULO III.B ---
 function renderIIIB(tipo, sottotipologia) {
     app.innerHTML = `
@@ -842,6 +846,7 @@ function calcolaIIIG(sottotipologia) {
     </style>
 </body>
 </html>
+
 
 
 
