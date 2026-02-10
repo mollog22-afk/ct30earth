@@ -126,13 +126,14 @@ const app = document.getElementById('app-container');
             app.innerHTML = html + `</div>`;
         }
 
-        function openCalculator(id, tipo, sottotipologia) {
-            if (id === 'III.A') renderIIIA(tipo, sottotipologia);
-            else if (id === 'II.A') renderIIA(tipo, sottotipologia);
-            else {
-                app.innerHTML = `<div class="p-16 text-center space-y-6"><div class="text-6xl">🛠️</div><h3 class="text-xl font-bold uppercase">Modulo ${id}</h3><p class="text-gray-400 italic font-bold">In fase di configurazione.</p></div>`;
-            }
-        }
+ function openCalculator(id, tipo, sottotipologia) {
+    if (id === 'III.A') renderIIIA(tipo, sottotipologia);
+    else if (id === 'III.B') renderIIIB(tipo, sottotipologia); // AGGIUNTO IL COLLEGAMENTO
+    else if (id === 'II.A') renderIIA(tipo, sottotipologia);
+    else {
+        app.innerHTML = `<div class="p-16 text-center space-y-6"><div class="text-6xl">🛠️</div><h3 class="text-xl font-bold uppercase">Modulo ${id}</h3><p class="text-gray-400 italic font-bold">In fase di configurazione.</p></div>`;
+    }
+}
 
         // --- CALCOLATORE II.A (ISOLAMENTO) ---
         function renderIIA(tipo, sottotipologia) {
@@ -364,6 +365,7 @@ function calcolaIIIB(sottotipologia) {
     </style>
 </body>
 </html>
+
 
 
 
