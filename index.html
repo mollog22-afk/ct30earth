@@ -126,9 +126,14 @@ const app = document.getElementById('app-container');
             app.innerHTML = html + `</div>`;
         }
 
- function openCalculator(id, tipo, sottotipologia) {
+function openCalculator(id, tipo, sottotipologia) {
     if (id === 'III.A') renderIIIA(tipo, sottotipologia);
-    else if (id === 'III.B') renderIIIB(tipo, sottotipologia); // AGGIUNTO IL COLLEGAMENTO
+    else if (id === 'III.B') renderIIIB(tipo, sottotipologia);
+    else if (id === 'III.C') renderIIIC(tipo, sottotipologia);
+    else if (id === 'III.D') renderIIID(tipo, sottotipologia);
+    else if (id === 'III.E') renderIIIE(tipo, sottotipologia);
+    else if (id === 'III.F') renderIIIF(tipo, sottotipologia);
+    else if (id === 'III.G') renderIIIG(tipo, sottotipologia); // AGGIUNGI QUESTA RIGA
     else if (id === 'II.A') renderIIA(tipo, sottotipologia);
     else {
         app.innerHTML = `<div class="p-16 text-center space-y-6"><div class="text-6xl">🛠️</div><h3 class="text-xl font-bold uppercase">Modulo ${id}</h3><p class="text-gray-400 italic font-bold">In fase di configurazione.</p></div>`;
@@ -270,7 +275,123 @@ const app = document.getElementById('app-container');
         }
         renderHome();
     // ... qui finisce la tua funzione calcolaIIIA ...
+// --- MODULO III.C - BIOMASSA ---
+function renderIIIC(tipo, sottotipologia) {
+    app.innerHTML = `
+        <div class="animate-fadeIn">
+            <div class="flex justify-between items-center border-b pb-4 mb-6">
+                <button onclick="renderHome()" class="text-blue-600 text-sm font-bold">← Home</button>
+                <h2 class="text-2xl font-bold text-blue-800">Calcolo III.C - Biomassa</h2>
+                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">${sottotipologia}</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="space-y-4 bg-gray-50 p-6 rounded-2xl shadow-inner">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Spesa Stimata (€)</label>
+                        <input type="number" id="spesaIIIC" class="w-full p-3 border rounded-xl" placeholder="Es: 12000">
+                    </div>
 
+                    <div>
+                        <label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Tipologia Generatore</label>
+                        <select id="tipoBiomassa" class="w-full p-3 border-2 border-blue-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="caldaia">Caldaia a Biomassa</option>
+                            <option value="stufa_pellet">Stufa / Termocamino a Pellet</option>
+                            <option value="stufa_legna">Stufa / Termocamino a Legna</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Potenza Pn (kW)</label>
+                            <input type="number" id="pnIIIC" class="w-full p-3 border rounded-xl" placeholder="Es: 30">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Coeff. Emissioni (Ce)</label>
+                            <select id="ceIIIC" class="w-full p-3 border rounded-xl">
+                                <option value="1.0">Ce = 1.0 (Standard)</option>
+                                <option value="1.2">Ce = 1.2 (Ridotte)</option>
+                                <option value="1.5">Ce = 1.5 (Eccellenza)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Zona Climatica</label>
+                        <select id="zonaIIIC" class="w-full p-3 border rounded-xl">
+                            <option value="600">Zona A (600h)</option>
+                            <option value="850">Zona B (850h)</option>
+                            <option value="1100">Zona C (1100h)</option>
+                            <option value="1400">Zona D (1400h)</option>
+                            <option value="1700">Zona E (1700h)</option>
+                            <option value="1800">Zona F (1800h)</option>
+                        </select>
+                    </div>
+
+                    <button onclick="calcolaIIIC('${sottotipologia}')" class="w-full bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg hover:bg-blue-800 uppercase transition-all">CALCOLA INCENTIVO III.C</button>
+                </div>
+
+                <div id="res-box-IIIC" class="hidden p-8 bg-white border-2 border-blue-600 rounded-2xl shadow-xl flex flex-col justify-center">
+                    <p class="text-[10px] font-black text-gray-400 uppercase mb-2 text-center">Incentivo Annuo (Ia,tot)</p>
+                    <p id="valAnnuoIIIC" class="text-xl font-bold text-gray-500 mb-4 text-center border-b pb-2 border-gray-100">€ 0,00/anno</p>
+                    
+                    <p class="text-sm font-black text-blue-800 uppercase mb-2 text-center">Incentivo Totale Erogabile</p>
+                    <p id="valTotaleIIIC" class="text-5xl font-black text-green-600 mb-6 text-center">€ 0,00</p>
+                    
+                    <div id="info-rate-IIIC" class="p-4 bg-green-50 rounded-lg text-[11px] text-green-800 font-medium border-l-4 border-green-500"></div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function calcolaIIIC(sottotipologia) {
+    const spesa = parseFloat(document.getElementById('spesaIIIC').value) || 0;
+    const pn = parseFloat(document.getElementById('pnIIIC').value) || 0;
+    const hr = parseFloat(document.getElementById('zonaIIIC').value) || 0;
+    const ce = parseFloat(document.getElementById('ceIIIC').value) || 1;
+    const tipoGen = document.getElementById('tipoBiomassa').value;
+
+    if (spesa <= 0 || pn <= 0) { alert("Inserire spesa e potenza!"); return; }
+
+    // 1. Determinazione Ci (Coefficiente di valorizzazione)
+    let ci = 0;
+    if (tipoGen === 'caldaia') {
+        if (pn <= 35) ci = 0.060;
+        else if (pn <= 500) ci = 0.025;
+        else ci = 0.020;
+    } else if (tipoGen === 'stufa_pellet') {
+        ci = 0.055;
+    } else { // legna
+        ci = 0.045;
+    }
+
+    // 2. Calcolo Incentivo Annuo (Ia,tot)
+    let iaTot = 0;
+    if (tipoGen === 'caldaia') {
+        iaTot = pn * hr * ci * ce;
+    } else {
+        // Formula logaritmica per stufe/termocamini: 3,35 * ln(Pn) * hr * Ci * Ce
+        iaTot = 3.35 * Math.log(pn) * hr * ci * ce;
+    }
+
+    // 3. Durata e Totale
+    const anni = pn <= 35 ? 2 : 5;
+    const lordoTotale = iaTot * anni;
+
+    // 4. Limite 65% (o 100% per soggetti speciali)
+    const soggetti100 = ["Scuole", "Istituti Penitenziari", "Strutture Sanitarie", "PA Standard sotto i 15.000 abitanti"];
+    let erogabile = soggetti100.includes(sottotipologia) ? lordoTotale : Math.min(lordoTotale, spesa * 0.65);
+
+    // 5. Visualizzazione
+    document.getElementById('res-box-IIIC').classList.remove('hidden');
+    document.getElementById('valAnnuoIIIC').innerText = "€ " + iaTot.toLocaleString('it-IT', {minimumFractionDigits: 2}) + " /anno";
+    document.getElementById('valTotaleIIIC').innerText = "€ " + erogabile.toLocaleString('it-IT', {minimumFractionDigits: 2});
+
+    const info = document.getElementById('info-rate-IIIC');
+    const msgRata = erogabile <= 15000 ? "un'<b>unica soluzione</b> (rata unica)" : `<b>${anni} rate</b> annuali`;
+    
+    info.innerHTML = `
+        Tecnologia: <b>${tipoGen.replace('_', ' ')}</b><br>
+        Durata incentivo: <b>${anni} anni
 // --- INIZIO MODULO III.B ---
 function renderIIIB(tipo, sottotipologia) {
     app.innerHTML = `
@@ -358,6 +479,362 @@ function calcolaIIIB(sottotipologia) {
         : `📅 <b>${anni} rate</b> annuali da € ${(erogabile/anni).toLocaleString('it-IT')}. Fattore k: <b>${k}</b>.`;
 }
 // --- FINE MODULO III.B ---
+    // --- MODULO III.D - SOLARE TERMICO ---
+function renderIIID(tipo, sottotipologia) {
+    app.innerHTML = `
+        <div class="animate-fadeIn">
+            <div class="flex justify-between items-center border-b pb-4 mb-6">
+                <button onclick="renderHome()" class="text-blue-600 text-sm font-bold">← Home</button>
+                <h2 class="text-2xl font-bold text-blue-800">Calcolo III.D - Solare Termico</h2>
+                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">${sottotipologia}</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="space-y-4 bg-gray-50 p-6 rounded-2xl shadow-inner">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Spesa Stimata (€)</label>
+                        <input type="number" id="spesaIIID" class="w-full p-3 border rounded-xl" placeholder="Es: 4500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Tipologia Installazione</label>
+                        <select id="tipoSolare" class="w-full p-3 border-2 border-blue-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="piani">Collettori Piani / Sottovuoto</option>
+                            <option value="concentrazione">Collettori a Concentrazione</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Superficie Lorda Apertura (mq)</label>
+                        <input type="number" id="mqSolare" class="w-full p-3 border rounded-xl" placeholder="Es: 4.5">
+                        <p class="text-[10px] text-gray-400 mt-1 italic">* Verificare il valore sulla scheda tecnica o certificato Solar Keymark</p>
+                    </div>
+
+                    <button onclick="calcolaIIID('${sottotipologia}')" class="w-full bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg hover:bg-blue-800 uppercase transition-all">CALCOLA INCENTIVO III.D</button>
+                </div>
+
+                <div id="res-box-IIID" class="hidden p-8 bg-white border-2 border-blue-600 rounded-2xl shadow-xl flex flex-col justify-center">
+                    <p class="text-[10px] font-black text-gray-400 uppercase mb-2 text-center">Incentivo Totale Calcolato</p>
+                    <p id="valLordoIIID" class="text-2xl font-bold text-gray-500 mb-6 text-center border-b pb-4 border-gray-100">€ 0,00</p>
+                    
+                    <p class="text-sm font-black text-blue-800 uppercase mb-2 text-center">Incentivo Erogabile</p>
+                    <p id="valErogabileIIID" class="text-5xl font-black text-green-600 mb-6 text-center">€ 0,00</p>
+                    
+                    <div id="info-rate-IIID" class="p-4 bg-green-50 rounded-lg text-[11px] text-green-800 font-medium border-l-4 border-green-500"></div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function calcolaIIID(sottotipologia) {
+    const spesa = parseFloat(document.getElementById('spesaIIID').value) || 0;
+    const mq = parseFloat(document.getElementById('mqSolare').value) || 0;
+    const tipo = document.getElementById('tipoSolare').value;
+
+    if (spesa <= 0 || mq <= 0) { alert("Inserire spesa e superficie mq!"); return; }
+
+    // 1. Parametri Regole Applicative CT 3.0
+    // Per mq <= 50: Ci = 300 €/mq (Piani) o 340 €/mq (Concentrazione)
+    // Per mq > 50: la formula cambia ma per semplicità usiamo il limite domestico comune.
+    // In CT 3.0 il solare termico standard viene calcolato: Incentivo = Slt * Ci
+    let ci = (tipo === 'piani') ? 300 : 340;
+    
+    // Durata incentivo: 
+    // mq <= 50 -> 2 anni
+    // mq > 50 -> 5 anni
+    const anni = (mq <= 50) ? 2 : 5;
+    
+    // Calcolo Incentivo Totale (Itot = Slt * Ci * anni)
+    // Nota: Nelle tabelle il Ci è spesso già riferito alla durata totale o annua, 
+    // qui applichiamo la valorizzazione standard per mq per anno.
+    const lordoTotale = mq * ci; 
+
+    // 2. Limite 65% (o 100% per soggetti speciali)
+    const soggetti100 = ["Scuole", "Istituti Penitenziari", "Strutture Sanitarie", "PA Standard sotto i 15.000 abitanti"];
+    let erogabile = soggetti100.includes(sottotipologia) ? lordoTotale : Math.min(lordoTotale, spesa * 0.65);
+
+    // 3. Visualizzazione
+    document.getElementById('res-box-IIID').classList.remove('hidden');
+    document.getElementById('valLordoIIID').innerText = "€ " + lordoTotale.toLocaleString('it-IT', {minimumFractionDigits: 2});
+    document.getElementById('valErogabileIIID').innerText = "€ " + erogabile.toLocaleString('it-IT', {minimumFractionDigits: 2});
+
+    const info = document.getElementById('info-rate-IIID');
+    const msgRata = erogabile <= 15000 ? "un'<b>unica soluzione</b>" : `<b>${anni} rate</b> annuali`;
+    
+    info.innerHTML = `
+        Superficie lorda: <b>${mq} mq</b><br>
+        Coefficiente applicato: <b>${ci} €/mq</b><br>
+        Erogazione in: ${msgRata}.
+    `;
+}
+    // --- MODULO III.E - SCALDACQUA PDC ---
+function renderIIIE(tipo, sottotipologia) {
+    app.innerHTML = `
+        <div class="animate-fadeIn">
+            <div class="flex justify-between items-center border-b pb-4 mb-6">
+                <button onclick="renderHome()" class="text-blue-600 text-sm font-bold">← Home</button>
+                <h2 class="text-2xl font-bold text-blue-800">Calcolo III.E - Scaldacqua PDC</h2>
+                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">${sottotipologia}</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="space-y-4 bg-gray-50 p-6 rounded-2xl shadow-inner">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Spesa Totale Ammissibile (€)</label>
+                        <input type="number" id="spesaIIIE" class="w-full p-3 border rounded-xl" placeholder="Es: 2500">
+                        <p class="text-[9px] text-gray-400 mt-1 uppercase font-bold">* Include IVA, installazione e pratica tecnica</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Classe Energetica</label>
+                        <select id="classeIIIE" class="w-full p-3 border-2 border-blue-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="A">Classe A</option>
+                            <option value="Aplus">Classe A+ o superiore</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Capacità Accumulo (Litri)</label>
+                        <select id="capacitaIIIE" class="w-full p-3 border-2 border-blue-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="piccolo">Fino a 150 Litri</option>
+                            <option value="grande">Oltre 150 Litri</option>
+                        </select>
+                    </div>
+
+                    <button onclick="calcolaIIIE('${sottotipologia}')" class="w-full bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg hover:bg-blue-800 uppercase transition-all">CALCOLA INCENTIVO III.E</button>
+                </div>
+
+                <div id="res-box-IIIE" class="hidden p-8 bg-white border-2 border-blue-600 rounded-2xl shadow-xl flex flex-col justify-center">
+                    <p class="text-[10px] font-black text-gray-400 uppercase mb-2 text-center">Massimale Applicabile</p>
+                    <p id="valMassimaleIIIE" class="text-xl font-bold text-gray-500 mb-6 text-center border-b pb-4 border-gray-100">€ 0,00</p>
+                    
+                    <p class="text-sm font-black text-blue-800 uppercase mb-2 text-center">Incentivo Erogabile</p>
+                    <p id="valErogabileIIIE" class="text-5xl font-black text-green-600 mb-6 text-center">€ 0,00</p>
+                    
+                    <div id="info-rate-IIIE" class="p-4 bg-green-50 rounded-lg text-[11px] text-green-800 font-medium border-l-4 border-green-500"></div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function calcolaIIIE(sottotipologia) {
+    const spesa = parseFloat(document.getElementById('spesaIIIE').value) || 0;
+    const classe = document.getElementById('classeIIIE').value;
+    const capacita = document.getElementById('capacitaIIIE').value;
+
+    if (spesa <= 0) { alert("Inserire la spesa sostenuta!"); return; }
+
+    // 1. Determinazione Massimale (Tabella 38)
+    let massimale = 0;
+    if (classe === 'A') {
+        massimale = (capacita === 'piccolo') ? 500 : 1100;
+    } else { // A+ o superiore
+        massimale = (capacita === 'piccolo') ? 700 : 1500;
+    }
+
+    // 2. Percentuale di base (40%)
+    let percentuale = 0.40;
+
+    // 3. Eccezione PA Speciale (100% della spesa, sempre entro il massimale)
+    const soggetti100 = ["Scuole", "Strutture Sanitarie", "Istituti Penitenziari"];
+    if (soggetti100.includes(sottotipologia)) {
+        percentuale = 1.0;
+    }
+
+    // 4. Calcolo Finale
+    const calcoloPercentuale = spesa * percentuale;
+    const erogabile = Math.min(calcoloPercentuale, massimale);
+
+    // 5. Visualizzazione
+    document.getElementById('res-box-IIIE').classList.remove('hidden');
+    document.getElementById('valMassimaleIIIE').innerText = "€ " + massimale.toLocaleString('it-IT', {minimumFractionDigits: 2});
+    document.getElementById('valErogabileIIIE').innerText = "€ " + erogabile.toLocaleString('it-IT', {minimumFractionDigits: 2});
+
+    const info = document.getElementById('info-rate-IIIE');
+    info.innerHTML = `
+        Aliquota applicata: <b>${percentuale * 100}%</b><br>
+        Erogazione: <b>Rata Unica</b> (bonifico diretto).<br>
+        <span class="text-[9px] mt-2 block">Nota: l'incentivo è calcolato come il valore minore tra il ${percentuale * 100}% della spesa e il tetto massimo di categoria.</span>
+    `;
+}
+    // --- MODULO III.F - TELERISCALDAMENTO ---
+function renderIIIF(tipo, sottotipologia) {
+    app.innerHTML = `
+        <div class="animate-fadeIn">
+            <div class="flex justify-between items-center border-b pb-4 mb-6">
+                <button onclick="renderHome()" class="text-blue-600 text-sm font-bold">← Home</button>
+                <h2 class="text-2xl font-bold text-blue-800">Calcolo III.F - Teleriscaldamento</h2>
+                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">${sottotipologia}</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="space-y-4 bg-gray-50 p-6 rounded-2xl shadow-inner">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Spesa Stimata Allaccio (€)</label>
+                        <input type="number" id="spesaIIIF" class="w-full p-3 border rounded-xl" placeholder="Es: 18000">
+                        <p class="text-[9px] text-gray-400 mt-1 uppercase font-bold">* Include scavi, sottostazione e smaltimento vecchio impianto</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Potenza Sottostazione Pnsc (kW)</label>
+                        <input type="number" id="pnscIIIF" class="w-full p-3 border-2 border-blue-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Es: 100">
+                    </div>
+
+                    <div class="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                        <p class="text-[10px] text-blue-800 leading-relaxed font-medium">
+                            <b>Requisito:</b> La rete deve essere "efficiente" ai sensi del D.Lgs 102/2014 e registrata presso ARERA. L'intervento deve essere una sostituzione.
+                        </p>
+                    </div>
+
+                    <button onclick="calcolaIIIF('${sottotipologia}')" class="w-full bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg hover:bg-blue-800 uppercase transition-all">CALCOLA INCENTIVO III.F</button>
+                </div>
+
+                <div id="res-box-IIIF" class="hidden p-8 bg-white border-2 border-blue-600 rounded-2xl shadow-xl flex flex-col justify-center">
+                    <p class="text-[10px] font-black text-gray-400 uppercase mb-2 text-center">Parametri Scaglione</p>
+                    <p id="infoParamIIIF" class="text-xs font-bold text-gray-500 mb-6 text-center border-b pb-4 border-gray-100">Costo Unitario: - | Massimale: -</p>
+                    
+                    <p class="text-sm font-black text-blue-800 uppercase mb-2 text-center">Incentivo Erogabile</p>
+                    <p id="valErogabileIIIF" class="text-5xl font-black text-green-600 mb-6 text-center">€ 0,00</p>
+                    
+                    <div id="info-rate-IIIF" class="p-4 bg-green-50 rounded-lg text-[11px] text-green-800 font-medium border-l-4 border-green-500"></div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function calcolaIIIF(sottotipologia) {
+    const spesa = parseFloat(document.getElementById('spesaIIIF').value) || 0;
+    const pnsc = parseFloat(document.getElementById('pnscIIIF').value) || 0;
+
+    if (spesa <= 0 || pnsc <= 0) { alert("Inserire spesa e potenza sottostazione!"); return; }
+
+    // 1. Definizione Scaglioni (Tabella 39)
+    let c = 0;
+    let imax = 0;
+
+    if (pnsc <= 50) {
+        c = 200;
+        imax = 6500;
+    } else if (pnsc <= 150) {
+        c = 160;
+        imax = 15000;
+    } else {
+        c = 130;
+        imax = 30000;
+    }
+
+    // 2. Percentuale di spesa (65% standard, 100% per scuole/ospedali PA)
+    let percSpesa = 0.65;
+    const soggetti100 = ["Scuole", "Strutture Sanitarie", "Istituti Penitenziari"];
+    if (soggetti100.includes(sottotipologia)) {
+        percSpesa = 1.0;
+    }
+
+    // 3. Calcolo Formula: %spesa * C * Pnsc
+    const lordoTeorico = percSpesa * c * pnsc;
+    
+    // 4. Verifica Massimali (L'erogabile non può superare Imax)
+    const erogabile = Math.min(lordoTeorico, imax);
+
+    // 5. Durata e Rateazione
+    // Sopra i 15.000 € erogazione in 5 rate, altrimenti rata unica
+    const anni = erogabile <= 15000 ? 1 : 5;
+
+    // 6. Visualizzazione
+    document.getElementById('res-box-IIIF').classList.remove('hidden');
+    document.getElementById('infoParamIIIF').innerHTML = `Costo Unitario: <b>${c} €/kW</b> | Massimale: <b>${imax.toLocaleString()} €</b>`;
+    document.getElementById('valErogabileIIIF').innerText = "€ " + erogabile.toLocaleString('it-IT', {minimumFractionDigits: 2});
+
+    const info = document.getElementById('info-rate-IIIB'); // Usiamo lo stesso ID per coerenza di stile o info-rate-IIIF
+    const infoContainer = document.getElementById('info-rate-IIIF');
+    
+    if (erogabile <= 15000) {
+        infoContainer.innerHTML = `✅ Importo ≤ 15.000€: l'erogazione avviene in <b>un'unica soluzione</b>.`;
+    } else {
+        infoContainer.innerHTML = `📅 Importo > 15.000€: l'erogazione avviene in <b>5 rate annuali</b> costanti da € ${(erogabile/5).toLocaleString('it-IT', {minimumFractionDigits:2})}.`;
+    }
+}
+ // --- MODULO III.G - MICROCOGENERAZIONE ---
+function renderIIIG(tipo, sottotipologia) {
+    app.innerHTML = `
+        <div class="animate-fadeIn">
+            <div class="flex justify-between items-center border-b pb-4 mb-6">
+                <button onclick="renderHome()" class="text-blue-600 text-sm font-bold">← Home</button>
+                <h2 class="text-2xl font-bold text-blue-800">Calcolo III.G - Microcogenerazione</h2>
+                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">${sottotipologia}</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="space-y-4 bg-gray-50 p-6 rounded-2xl shadow-inner">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Spesa Totale Ammissibile (€)</label>
+                        <input type="number" id="spesaIIIG" class="w-full p-3 border rounded-xl" placeholder="Es: 45000">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Potenza Elettrica Nominale Pn,int (kWe)</label>
+                        <input type="number" id="pneIIIG" class="w-full p-3 border-2 border-blue-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Es: 15">
+                        <p class="text-[9px] text-gray-400 mt-1 uppercase font-bold">* Massimo 50 kWe per singola unità</p>
+                    </div>
+
+                    <div class="p-4 bg-blue-50 rounded-xl border border-blue-100 space-y-2">
+                        <p class="text-[10px] text-blue-800 leading-relaxed font-bold">REQUISITI CT 3.0:</p>
+                        <ul class="text-[9px] text-blue-700 list-disc ml-4 font-medium uppercase">
+                            <li>Alimentazione da fonti rinnovabili</li>
+                            <li>Risparmio Energia Primaria (PES) ≥ 10%</li>
+                            <li>Sostituzione (anche funzionale) di impianto esistente</li>
+                        </ul>
+                    </div>
+
+                    <button onclick="calcolaIIIG('${sottotipologia}')" class="w-full bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg hover:bg-blue-800 uppercase transition-all">CALCOLA INCENTIVO III.G</button>
+                </div>
+
+                <div id="res-box-IIIG" class="hidden p-8 bg-white border-2 border-blue-600 rounded-2xl shadow-xl flex flex-col justify-center">
+                    <p class="text-[10px] font-black text-gray-400 uppercase mb-2 text-center">Calcolo Teorico (65% di C * Pne)</p>
+                    <p id="valLordoIIIG" class="text-xl font-bold text-gray-500 mb-6 text-center border-b pb-4 border-gray-100">€ 0,00</p>
+                    
+                    <p class="text-sm font-black text-blue-800 uppercase mb-2 text-center">Incentivo Finale Erogabile</p>
+                    <p id="valErogabileIIIG" class="text-5xl font-black text-green-600 mb-6 text-center">€ 0,00</p>
+                    
+                    <div id="info-rate-IIIG" class="p-4 bg-green-50 rounded-lg text-[11px] text-green-800 font-medium border-l-4 border-green-500"></div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function calcolaIIIG(sottotipologia) {
+    const spesa = parseFloat(document.getElementById('spesaIIIG').value) || 0;
+    const pne = parseFloat(document.getElementById('pneIIIG').value) || 0;
+
+    if (spesa <= 0 || pne <= 0) { alert("Inserire spesa e potenza elettrica!"); return; }
+    if (pne >= 50) { alert("Attenzione: la microcogenerazione è ammessa solo per potenze inferiori a 50 kWe."); }
+
+    // 1. Parametri Tabella 40
+    const costoSpecifico = 5000; // €/kWe
+    const imax = 100000; // €
+
+    // 2. Percentuale spesa (65% standard, 100% scuole/ospedali PA)
+    let percSpesa = 0.65;
+    const soggetti100 = ["Scuole", "Strutture Sanitarie", "Istituti Penitenziari"];
+    if (soggetti100.includes(sottotipologia)) {
+        percSpesa = 1.0;
+    }
+
+    // 3. Calcolo Formula: %spesa * CostoSpecifico * Pne
+    const lordoTeorico = percSpesa * costoSpecifico * pne;
+    
+    // 4. Verifica tetti (Non può superare il massimale di 100.000€)
+    const erogabile = Math.min(lordoTeorico, imax);
+
+    // 5. Visualizzazione
+    document.getElementById('res-box-IIIG').classList.remove('hidden');
+    document.getElementById('valLordoIIIG').innerText = "€ " + lordoTeorico.toLocaleString('it-IT', {minimumFractionDigits: 2});
+    document.getElementById('valErogabileIIIG').innerText = "€ " + erogabile.toLocaleString('it-IT', {minimumFractionDigits: 2});
+
+    const infoContainer = document.getElementById('info-rate-IIIG');
+    
+    if (erogabile <= 15000) {
+        infoContainer.innerHTML = `✅ Importo ≤ 15.000€: l'erogazione avviene in <b>un'unica soluzione</b>.`;
+    } else {
+        infoContainer.innerHTML = `📅 Importo > 15.000€: l'erogazione avviene in <b>5 rate annuali</b> costanti da € ${(erogabile/5).toLocaleString('it-IT', {minimumFractionDigits:2})}.`;
+    }
+}   
     </script>
     <style>
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -365,6 +842,7 @@ function calcolaIIIB(sottotipologia) {
     </style>
 </body>
 </html>
+
 
 
 
