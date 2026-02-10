@@ -270,20 +270,7 @@ function openCalculator(id, tipo, sottotipologia) {
                     </div>
                 </div>`;
         }
-    const datiIIA = {
-    soggetto: sottotipologia,
-    spesa: spesa,
-    tecnici: `Superficie Totale: ${mqCop + mqPav + mqPar} mq`,
-    zona: zona === "EF" ? "Zona E/F" : "Zona A/B/C/D",
-    incentivo: finale
-};
-
-document.getElementById('resIIA').innerHTML += `
-    <button onclick='generaReportDati("II.A", ${JSON.stringify(datiIIA)})' 
-            class="mt-6 w-full bg-blue-100 text-blue-800 font-bold py-2 rounded-lg border border-blue-200 hover:bg-blue-200 transition no-print">
-        📄 Genera Scheda per PDF
-    </button>`;
-
+    
         function calcolaIIIA(sottotipologia) {
             const spesa = parseFloat(document.getElementById('spesaIII').value) || 0;
             const pm = parseFloat(document.getElementById('pmIII').value) || 0;
@@ -1447,6 +1434,7 @@ function calcolaIIIG(sottotipologia) {
     </style>
 </body>
 </html>
+
 
 
 
